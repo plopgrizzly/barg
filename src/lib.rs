@@ -17,95 +17,103 @@
 //! 
 //! Alpha blending will be done backwards.  No matter what faces that are closest to the camera will always be drawn first.  The alpha value will be stored on the surface we're rendering to.  If it's 255 then pixels will be culled.  If it's less faces will be blended behind the face currently in the render buffer.
 
+extern crate afi;
+extern crate fonterator;
+extern crate ami;
+extern crate arrayvec;
+extern crate ordered_float;
+#[macro_use] extern crate approx;
+
+mod draw;
+
+/// The default font.
+pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
+pub use fonterator::Font;
+
+use afi::{ColorChannels::*, VFrame};
+pub use afi::{PathOp};
+pub use PathOp::{Move, Line, Quad};
+
 /// Size of an image (width, height).
-#[derive(Copy, Clone)] pub struct Size(u16, u16);
+#[derive(Copy, Clone)] pub struct Size(pub u16, pub u16);
 
-/// A raster pixel (64 bits).
-#[derive(Clone)]
-struct Pixel {
-	hsv: (u16, u8, u8), // 32 bit linear HSV.
-	pct: u8, // 8 bit linear alpha value.
-	fog: u8, // 8 bit linear fog value.
-	int: u8, // 8 bit light intensity value.
-	hue: u8, // 8 bit light hue value.
-}
-
-/// 3 dimensional path operation.
-#[derive(Copy, Clone)]
-pub enum PathOp3D {
-	/// Set origin for a new face: `X`, `Y`, `Z`.
-	Move(f32, f32, f32),
-	/// Add a line to this face: `X`, `Y`, `Z`.
-	Line(f32, f32, f32),
-	/// Add a qaudratic curve to this face: `cX`, `cY`, `cZ`, `X`, `Y`, `Z`.
-	/// This doesn't work yet.
-	Quad(f32, f32, f32, f32, f32, f32),
-}
-
-pub use PathOp3D::{Move, Line, Quad};
-
-/// Texture Coordinates (Mapped to a `PathOp3D`).
+/// Texture Coordinates (Mapped to a `PathOp`).
 #[derive(Copy, Clone)]
 pub struct TexCoord(pub f32, pub f32);
-
-/// 32-bit sRGBA Color.
-#[derive(Copy, Clone)]
-pub struct Color(pub u8, pub u8, pub u8, pub u8);
-
-impl Color {
-	/// Convert sRGB to HSV
-	fn hsv(self) -> (u16, u8, u8) {
-		let r = self.0 as f32 / ::std::u8::MAX as f32;
-		let g = self.1 as f32 / ::std::u8::MAX as f32;
-		let b = self.2 as f32 / ::std::u8::MAX as f32;
-
-		// TODO: Conversion
-		let h = (r * ::std::u16::MAX as f32) as u16;
-		let s = (g * ::std::u8::MAX as f32) as u8;
-		let v = (b * ::std::u8::MAX as f32) as u8;
-
-		(h, s, v)
-	}
-}
 
 /// An HSV Surface.
 pub struct Surface {
 	#[allow(unused)] // TODO
 	size: Size,
-	pixels: Vec<Pixel>,
+	// Linear HSV (TODO: stop color precision loss by u8 -> u16).
+	pixels: VFrame, // Vec<[u16; 4]>,
 }
 
 impl Surface {
-	/// Create a new HSV Image.
+	/// Create a new HSV Surface.
 	pub fn new(size: Size) -> Surface {
 		Surface {
-			size, pixels: vec![Pixel {
-				hsv: (0u16, 0u8, 0u8),
-				pct: 0,
-				fog: 0,
-				int: 0,
-				hue: 0,
-			}; size.0 as usize * size.1 as usize],
+			size, pixels: VFrame(vec![
+				0; size.0 as usize * size.1 as usize * 4
+			]),
 		}
 	}
 
-	/// Clear the Raster
-	pub fn clear(&mut self, color: Color) {
-		for i in &mut self.pixels {
-			*i = Pixel {
-				hsv: color.hsv(),
-				pct: 0,
-				fog: 0,
-				int: 0,
-				hue: 0,
-			};
+	/// Clear the Surface one color (sRGBA).
+	pub fn clear(&mut self, color: [u8; 4]) {
+		let mut index = 0;
+		let size = self.size.0 as usize * self.size.1 as usize;
+		let color = Lhsva.from(Srgba, color);
+		for _ in 0..size {
+			self.pixels.0[index + 0] = color[0];
+			self.pixels.0[index + 1] = color[1];
+			self.pixels.0[index + 2] = color[2];
+			self.pixels.0[index + 3] = color[3];
+
+			index += 4;
 		}
 	}
 
-	/// 
+	/// Draw a path a solid color (sRGBA).
 	#[allow(unused)] // TODO
-	pub fn draw<T>(&mut self, path: T) where T: Iterator<Item=PathOp3D> {
-		
+	pub fn draw<T>(&mut self, color: [u8; 4], path: T)
+		where T: IntoIterator<Item=PathOp>
+	{
+		let iter = path.into_iter();
+
+		draw::draw(&mut self.pixels, self.size, iter, color);
+	}
+
+	/// Read surface pixels (sRGBA).
+	pub fn srgba(&self, pixels: &mut [u8]) {
+		let mut index = 0;
+		let size = self.size.0 as usize * self.size.1 as usize;
+		for _ in 0..size {
+			let h = self.pixels.0[index + 0];
+			let s = self.pixels.0[index + 1];
+			let v = self.pixels.0[index + 2];
+			let a = self.pixels.0[index + 3];
+			let [r, g, b, a] = Srgba.from(Lhsva, [h,s,v,a]);
+
+			pixels[index + 0] = r;
+			pixels[index + 1] = g;
+			pixels[index + 2] = b;
+			pixels[index + 3] = a;
+
+			index += 4;
+		}
+	}
+}
+
+/// A Graphical User Interface.
+pub struct Gui {
+	
+}
+
+impl Gui {
+	pub fn new() -> Gui {
+		Gui {
+		}
 	}
 }
 
