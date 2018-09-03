@@ -84,6 +84,24 @@ impl Surface {
 		draw::draw(&mut self.pixels, self.size, iter, color);
 	}
 
+	/// Draw text.
+	pub fn text(&mut self, color: [u8; 4], xysize: (f32, f32, f32),
+		font: &Font, text: &str)
+	{
+		let mut x = xysize.0;
+		let y = xysize.1;
+		let size = xysize.2;
+
+		// Loop through the glyphs in the text, adding to the SVG.
+		for g in font.glyphs(text, (size, size)) {
+			// Draw the glyph
+			self.draw(color, g.0.draw(x, y));
+
+			// Position next glyph
+			x += g.1;
+		}
+	}
+
 	/// Read surface pixels (sRGBA).
 	pub fn srgba(&self, pixels: &mut [u8]) {
 		let mut index = 0;

@@ -19,28 +19,17 @@ pub fn write_png(width: u32, height: u32, pixels: &[u8], filename: &str) -> io::
 	Ok(())
 }
 
-const FONT_SIZE: f32 = 256.0;
-
 fn main() {
 	// This only succeeds if collection consists of one font
 	let font = Font::new(FONT).expect("Failed to load font!");
 
 	// Initialize variables need to write to PNG
-	let w = 256 * 16;
+	let w = 256 * 10;
 	let h = 256;
 	let mut buffer = vec![0; w * h * 4];
 	let mut surface = Surface::new(Size(w as u16, h as u16));
-	let mut x = 0.0;
 
-	// Loop through the glyphs in the text, adding to the SVG.
-	for g in font.glyphs("Splat And…    ‽é¿?üæ", (FONT_SIZE, FONT_SIZE)) {
-		// Draw the glyph
-		surface.draw([0,0,0,255], g.0.draw(x, 0.0));
-
-		// Position next glyph
-		x += g.1;
-	}
-
+	surface.text([0,0,0,255], (0.0,0.0,256.0), &font, "Splat And… ‽é¿?üæ");
 	surface.srgba(&mut buffer);
 
 	// Save the image to a PNG file.
