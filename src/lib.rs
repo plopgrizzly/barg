@@ -43,8 +43,7 @@ pub struct TexCoord(pub f32, pub f32);
 
 /// An HSV Surface.
 pub struct Surface {
-	#[allow(unused)] // TODO
-	size: Size,
+	pub size: Size,
 	// Linear HSV (TODO: stop color precision loss by u8 -> u16).
 	pixels: VFrame, // Vec<[u16; 4]>,
 }
@@ -89,11 +88,18 @@ impl Surface {
 		font: &Font, text: &str)
 	{
 		let mut x = xysize.0;
-		let y = xysize.1;
+		let mut y = xysize.1;
 		let size = xysize.2;
 
 		// Loop through the glyphs in the text, adding to the SVG.
 		for g in font.glyphs(text, (size, size)) {
+			// Check for newline
+			if g.2 {
+				x = xysize.0;
+				y += size;
+				continue;
+			}
+
 			// Draw the glyph
 			self.draw(color, g.0.draw(x, y));
 
@@ -102,24 +108,18 @@ impl Surface {
 		}
 	}
 
-	/// Read surface pixels (sRGBA).
-	pub fn srgba(&self, pixels: &mut [u8]) {
-		let mut index = 0;
-		let size = self.size.0 as usize * self.size.1 as usize;
-		for _ in 0..size {
-			let h = self.pixels.0[index + 0];
-			let s = self.pixels.0[index + 1];
-			let v = self.pixels.0[index + 2];
-			let a = self.pixels.0[index + 3];
-			let [r, g, b, a] = Srgba.from(Lhsva, [h,s,v,a]);
+	/// Sample sRGBA.
+	pub fn srgba(&self, x: u16, y: u16) -> [u8; 4] {
+//		println!("{} {} {} {}", x, y, self.size.0, self.size.1);
+		let index = ((y as usize * self.size.0 as usize)
+			+ x as usize) * 4usize;
 
-			pixels[index + 0] = r;
-			pixels[index + 1] = g;
-			pixels[index + 2] = b;
-			pixels[index + 3] = a;
-
-			index += 4;
-		}
+		let h = self.pixels.0[index + 0];
+		let s = self.pixels.0[index + 1];
+		let v = self.pixels.0[index + 2];
+		let a = self.pixels.0[index + 3];
+		
+		Srgba.from(Lhsva, [h,s,v,a])
 	}
 }
 
