@@ -4,20 +4,21 @@
 // https://www.boost.org/LICENSE_1_0.txt)
 
 use Size;
-use afi::{VFrame, PathOp, ColorChannels, over};
+use afi::{VFrame, PathOp, over};
 
 mod geometry;
 mod rasterizer;
 
-use self::geometry::{Curve, Line, point};
+use self::geometry::{point};
+
+pub(crate) use self::geometry::{Curve, Line};
 
 /// Draw vector graphics on a VFrame.
+#[inline(always)]
 pub(crate) fn draw<I>(vframe: &mut VFrame, wh: Size, path: I,
-	color: [u8; 4])
+	color: [u8; 4], lines: &mut Vec<Line>, curves: &mut Vec<Curve>)
 		where I: IntoIterator<Item = PathOp>
 {
-        let mut lines = Vec::new();
-        let mut curves = Vec::new();
 	let mut last = point(0.0, 0.0);
 
 	for path_op in path.into_iter() {
@@ -50,11 +51,13 @@ pub(crate) fn draw<I>(vframe: &mut VFrame, wh: Size, path: I,
 	rasterizer::rasterize(&lines, &curves, wh.0, wh.1, |x, y, v| {
 		let index = (y as usize * wh.0 as usize) + x as usize;
 
-		let dst = vframe.get_rgba(ColorChannels::Srgba, index);
+		let dst = vframe.get(index);
 		let src = [color[0], color[1], color[2],
 			(color[3] as f32 * v) as u8];
 
-		vframe.set_rgba(ColorChannels::Srgba, index,
-			over(src, dst));
+		vframe.set(index, over(src, dst));
 	});
+
+	lines.clear();
+	curves.clear();
 }

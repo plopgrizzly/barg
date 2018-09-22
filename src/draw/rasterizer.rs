@@ -197,6 +197,7 @@ impl SliceUp for Curve {
 	}
 }
 
+#[inline(always)]
 pub fn rasterize<O: FnMut(u16, u16, f32)>(
 	lines: &[Line],
 	curves: &[Curve],

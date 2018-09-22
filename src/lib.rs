@@ -30,7 +30,7 @@ mod draw;
 pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
 pub use fonterator::Font;
 
-use afi::{ColorChannels::*, VFrame};
+use afi::VFrame;
 pub use afi::{PathOp};
 pub use PathOp::{Move, Line, Quad};
 
@@ -41,11 +41,12 @@ pub use PathOp::{Move, Line, Quad};
 #[derive(Copy, Clone)]
 pub struct TexCoord(pub f32, pub f32);
 
-/// An HSV Surface.
+/// An sRGBA Surface.
 pub struct Surface {
 	pub size: Size,
-	// Linear HSV (TODO: stop color precision loss by u8 -> u16).
-	pixels: VFrame, // Vec<[u16; 4]>,
+	pixels: VFrame,
+	lines: Vec<draw::Line>,
+	curves: Vec<draw::Curve>,
 }
 
 impl Surface {
@@ -55,32 +56,38 @@ impl Surface {
 			size, pixels: VFrame(vec![
 				0; size.0 as usize * size.1 as usize * 4
 			]),
+			lines: vec![], curves: vec![],
 		}
 	}
 
-	/// Clear the Surface one color (sRGBA).
+/*	/// Clear the Surface one color (sRGBA).
 	pub fn clear(&mut self, color: [u8; 4]) {
-		let mut index = 0;
 		let size = self.size.0 as usize * self.size.1 as usize;
-		let color = Lhsva.from(Srgba, color);
-		for _ in 0..size {
-			self.pixels.0[index + 0] = color[0];
-			self.pixels.0[index + 1] = color[1];
-			self.pixels.0[index + 2] = color[2];
-			self.pixels.0[index + 3] = color[3];
 
-			index += 4;
+		for index in 0..size {
+			self.pixels.set(index, color);
 		}
+	}*/
+
+	/// Clear the Surface to nothing.
+	#[inline(always)]
+	pub fn empty(&mut self) {
+		self.pixels.clear();
+	}
+
+	#[inline(always)]
+	pub fn len(&mut self) -> usize {
+		self.size.0 as usize * self.size.1 as usize
 	}
 
 	/// Draw a path a solid color (sRGBA).
-	#[allow(unused)] // TODO
 	pub fn draw<T>(&mut self, color: [u8; 4], path: T)
 		where T: IntoIterator<Item=PathOp>
 	{
 		let iter = path.into_iter();
 
-		draw::draw(&mut self.pixels, self.size, iter, color);
+		draw::draw(&mut self.pixels, self.size, iter, color,
+			&mut self.lines, &mut self.curves);
 	}
 
 	/// Draw text.
@@ -109,17 +116,9 @@ impl Surface {
 	}
 
 	/// Sample sRGBA.
-	pub fn srgba(&self, x: u16, y: u16) -> [u8; 4] {
-//		println!("{} {} {} {}", x, y, self.size.0, self.size.1);
-		let index = ((y as usize * self.size.0 as usize)
-			+ x as usize) * 4usize;
-
-		let h = self.pixels.0[index + 0];
-		let s = self.pixels.0[index + 1];
-		let v = self.pixels.0[index + 2];
-		let a = self.pixels.0[index + 3];
-		
-		Srgba.from(Lhsva, [h,s,v,a])
+	#[inline(always)]
+	pub fn srgba(&self, index: usize) -> [u8; 4] {
+		self.pixels.get(index)
 	}
 }
 
