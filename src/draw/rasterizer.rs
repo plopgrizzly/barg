@@ -197,6 +197,30 @@ impl SliceUp for Curve {
 	}
 }
 
+static mut ACTIVE_LINES_Y: Option<Vec<LineSliceIter>> = None;
+static mut ACTIVE_CURVES_Y: Option<Vec<CurveSliceIter>> = None;
+static mut ACTIVE_LINES_X: Option<Vec<LineSliceIter>> = None;
+static mut ACTIVE_CURVES_X: Option<Vec<CurveSliceIter>> = None;
+
+static mut SCANLINE_LINES: Option<Vec<(Line, (f32, f32))>> = None;
+static mut LINES_TO_REMOVE: Option<Vec<usize>> = None;
+static mut SCANLINE_CURVES: Option<Vec<(Curve, (f32, f32))>> = None;
+static mut CURVES_TO_REMOVE: Option<Vec<usize>> = None;
+
+#[inline(always)]
+pub fn init() {
+	unsafe {
+		ACTIVE_LINES_Y = Some(Vec::new());
+		ACTIVE_CURVES_Y = Some(Vec::new());
+		ACTIVE_LINES_X = Some(Vec::new());
+		ACTIVE_CURVES_X = Some(Vec::new());
+		SCANLINE_LINES = Some(Vec::new());
+		LINES_TO_REMOVE = Some(Vec::new());
+		SCANLINE_CURVES = Some(Vec::new());
+		CURVES_TO_REMOVE = Some(Vec::new());
+	}
+}
+
 #[inline(always)]
 pub fn rasterize<O: FnMut(usize, usize, f32)>(
 	lines: &[Line],
@@ -212,14 +236,24 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 	let mut y = 0;
 	let mut next_line = 0;
 	let mut next_curve = 0;
-	let mut active_lines_y = Vec::new();
-	let mut active_curves_y = Vec::new();
-	let mut active_lines_x = Vec::new();
-	let mut active_curves_x = Vec::new();
-	let mut scanline_lines = Vec::new();
-	let mut lines_to_remove = Vec::new();
-	let mut scanline_curves = Vec::new();
-	let mut curves_to_remove = Vec::new();
+	let mut active_lines_y: Vec<LineSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_LINES_Y)};
+	let mut active_curves_y: Vec<CurveSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_CURVES_Y)};
+	let mut active_lines_x: Vec<LineSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_LINES_X)};
+	let mut active_curves_x: Vec<CurveSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_CURVES_X)};
+	let mut scanline_lines: Vec<(Line, (f32, f32))> = unsafe {::std::mem::transmute_copy(&SCANLINE_LINES)};
+	let mut lines_to_remove: Vec<usize> = unsafe {::std::mem::transmute_copy(&LINES_TO_REMOVE)};
+	let mut scanline_curves: Vec<(Curve, (f32, f32))> = unsafe {::std::mem::transmute_copy(&SCANLINE_CURVES)};
+	let mut curves_to_remove: Vec<usize> = unsafe {::std::mem::transmute_copy(&CURVES_TO_REMOVE)};
+
+	active_lines_y.clear();
+	active_curves_y.clear();
+	active_lines_x.clear();
+	active_curves_x.clear();
+	scanline_lines.clear();
+	lines_to_remove.clear();
+	scanline_curves.clear();
+	curves_to_remove.clear();
+
 	while y < height
 		&& (next_line != lines.len()
 			|| next_curve != curves.len()
@@ -383,4 +417,13 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 		}
 		y += 1;
 	}
+
+	unsafe {ACTIVE_LINES_Y = ::std::mem::transmute_copy(&ACTIVE_LINES_Y)};
+	unsafe {ACTIVE_CURVES_Y = ::std::mem::transmute_copy(&ACTIVE_CURVES_Y)};
+	unsafe {ACTIVE_LINES_X = ::std::mem::transmute_copy(&ACTIVE_LINES_X)};
+	unsafe {ACTIVE_CURVES_X = ::std::mem::transmute_copy(&ACTIVE_CURVES_X)};
+	unsafe {SCANLINE_LINES = ::std::mem::transmute_copy(&SCANLINE_LINES)};
+	unsafe {LINES_TO_REMOVE = ::std::mem::transmute_copy(&LINES_TO_REMOVE)};
+	unsafe {SCANLINE_CURVES = ::std::mem::transmute_copy(&SCANLINE_CURVES)};
+	unsafe {CURVES_TO_REMOVE = ::std::mem::transmute_copy(&CURVES_TO_REMOVE)};
 }

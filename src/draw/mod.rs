@@ -12,6 +12,7 @@ mod rasterizer;
 use self::geometry::{point};
 
 pub(crate) use self::geometry::{Curve, Line};
+pub(crate) use self::rasterizer::init;
 
 /// Draw vector graphics on a VFrame.
 #[inline(always)]

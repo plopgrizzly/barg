@@ -84,6 +84,8 @@ pub struct SurfaceInfo {
 impl SurfaceInfo {
 	/// Create a new Surface Information.
 	pub fn new(size: Size, pitch: Option<usize>) -> SurfaceInfo {
+		draw::init();
+
 		let pitch = pitch.unwrap_or(size.0 as usize * 4);
 		let len = pitch * size.1 as usize;
 
