@@ -198,11 +198,11 @@ impl SliceUp for Curve {
 }
 
 #[inline(always)]
-pub fn rasterize<O: FnMut(u16, u16, f32)>(
+pub fn rasterize<O: FnMut(usize, usize, f32)>(
 	lines: &[Line],
 	curves: &[Curve],
-	width: u16,
-	height: u16,
+	width: usize,
+	height: usize,
 	mut output: O,
 ) {
 	let mut lines: Vec<_> = lines.iter().map(|&l| (l, l.bounding_box())).collect();

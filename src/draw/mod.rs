@@ -4,7 +4,7 @@
 // https://www.boost.org/LICENSE_1_0.txt)
 
 use Size;
-use afi::{VFrame, PathOp, over};
+use afi::{PathOp, over};
 
 mod geometry;
 mod rasterizer;
@@ -15,7 +15,7 @@ pub(crate) use self::geometry::{Curve, Line};
 
 /// Draw vector graphics on a VFrame.
 #[inline(always)]
-pub(crate) fn draw<I>(vframe: &mut VFrame, wh: Size, path: I,
+pub(crate) fn draw<I>(image: *mut u8, wh: Size, pitch: usize, path: I,
 	color: [u8; 4], lines: &mut Vec<Line>, curves: &mut Vec<Curve>)
 		where I: IntoIterator<Item = PathOp>
 {
@@ -48,15 +48,22 @@ pub(crate) fn draw<I>(vframe: &mut VFrame, wh: Size, path: I,
 		}
 	}
 
-	rasterizer::rasterize(&lines, &curves, wh.0, wh.1, |x, y, v| {
-		let index = (y as usize * wh.0 as usize) + x as usize;
+	rasterizer::rasterize(&lines, &curves, wh.0 as usize, wh.1 as usize,
+		|x, y, v| {
+			let index = (y * pitch + (x * 4)) as isize;
 
-		let dst = vframe.get(index);
-		let src = [color[0], color[1], color[2],
-			(color[3] as f32 * v) as u8];
+			let src = [
+				color[0],
+				color[1],
+				color[2],
+				(color[3] as f32 * v) as u8
+			];
 
-		vframe.set(index, over(src, dst));
-	});
+			use std::slice::from_raw_parts_mut as raw_slice;
+
+			over(src, unsafe { raw_slice(image.offset(index), 4) });
+		}
+	);
 
 	lines.clear();
 	curves.clear();
