@@ -41,6 +41,18 @@ pub fn vector<N>(x: N, y: N) -> Vector<N> {
     Vector { x, y }
 }
 
+impl<T> Into<Vector<T>> for Point<T> {
+    fn into(self) -> Vector<T> {
+        Vector { x: self.x, y: self.y }
+    }
+}
+
+impl<T> Into<Point<T>> for Vector<T> {
+    fn into(self) -> Point<T> {
+        Point { x: self.x, y: self.y }
+    }
+}
+
 impl<N: ops::Sub<Output = N>> ops::Sub for Point<N> {
     type Output = Vector<N>;
     fn sub(self, rhs: Point<N>) -> Vector<N> {

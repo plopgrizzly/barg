@@ -57,11 +57,28 @@ impl<'a> LinkSurface<'a> {
 
 	/// Draw a path a solid color (sRGBA).
 	#[inline(always)]
-	pub fn draw<T>(&mut self, color: [u8; 4], path: T)
-		where T: IntoIterator<Item=PathOp>
+	pub fn draw<'b, T>(&mut self, color: [u8; 4], path: T)
+		where T: IntoIterator<Item=&'b PathOp>
 	{
 		self.0.draw(self.1, color, path);
 	}
+
+	/// Draw a path a solid color (sRGBA).
+	#[inline(always)]
+	pub fn path<'b, T>(&mut self, color: [u8; 4], path: T)
+		where T: IntoIterator<Item=&'b PathOp>
+	{
+		self.0.path(self.1, color, path);
+	}
+
+	/// Draw a path with a bitmap picture (sRGBA).
+	#[inline(always)]
+	pub fn bitmap<'b, T>(&mut self, color: (u16, u16, &[[u8; 4]]), path: T)
+		where T: IntoIterator<Item=&'b PathOp>
+	{
+		self.0.bitmap(self.1, color, path);
+	}
+
 
 	/// Draw text.
 	#[inline(always)]
@@ -75,6 +92,7 @@ impl<'a> LinkSurface<'a> {
 /// Surface Information.
 pub struct SurfaceInfo {
 	pub size: Size,
+    sizef: (f32, f32),
 	lines: Vec<draw::Line>,
 	curves: Vec<draw::Curve>,
 	pitch: usize,
@@ -90,7 +108,7 @@ impl SurfaceInfo {
 		let len = pitch * size.1 as usize;
 
 		SurfaceInfo {
-			size, lines: vec![], curves: vec![], pitch, len,
+			size, sizef: (size.0 as f32, size.1 as f32), lines: vec![], curves: vec![], pitch, len,
 		}
 	}
 
@@ -100,14 +118,34 @@ impl SurfaceInfo {
 	}
 
 	/// Draw a path a solid color (sRGBA).
-	fn draw<T>(&mut self, pixbuf: *mut u8, color: [u8; 4], path: T)
-		where T: IntoIterator<Item=PathOp>
+	fn draw<'a, T>(&mut self, pixbuf: *mut u8, color: [u8; 4], path: T)
+		where T: IntoIterator<Item=&'a PathOp>
 	{
 		let iter = path.into_iter();
 
 		draw::draw(pixbuf, self.size, self.pitch, iter, color,
-			&mut self.lines, &mut self.curves);
+			&mut self.lines, &mut self.curves, 1.0, 1.0);
 	}
+
+    /// Draw a path a solid color (sRGBA).
+    fn path<'a, T>(&mut self, pixbuf: *mut u8, color: [u8; 4], path: T)
+		where T: IntoIterator<Item = &'a PathOp>
+	{
+		let iter = path.into_iter();
+
+		draw::draw(pixbuf, self.size, self.pitch, iter, color,
+			&mut self.lines, &mut self.curves, self.sizef.0, self.sizef.1);
+	}
+
+    /// Draw a graphic.
+    fn bitmap<'a, T>(&mut self, pixbuf: *mut u8, color: (u16, u16, &[[u8; 4]]), path: T)
+		where T: IntoIterator<Item = &'a PathOp>
+    {
+		let iter = path.into_iter();
+
+        draw::bitmap(pixbuf, self.size, self.pitch, iter, color,
+			&mut self.lines, &mut self.curves, self.sizef.0, self.sizef.1);
+    }
 
 	/// Draw text.
 	fn text(&mut self, pixbuf: *mut u8, color: [u8; 4],
@@ -127,7 +165,7 @@ impl SurfaceInfo {
 			}
 
 			// Draw the glyph
-			self.draw(pixbuf, color, g.0.draw(x, y));
+			self.draw(pixbuf, color, g.0.draw(x, y).0.iter());
 
 			// Position next glyph
 			x += g.1;
@@ -166,8 +204,8 @@ impl Surface {
 
 	/// Draw a path a solid color (sRGBA).
 	#[inline(always)]
-	pub fn draw<T>(&mut self, color: [u8; 4], path: T)
-		where T: IntoIterator<Item=PathOp>
+	pub fn draw<'a, T>(&mut self, color: [u8; 4], path: T)
+		where T: IntoIterator<Item=&'a PathOp>
 	{
 		self.info.draw(self.pixels.as_mut_ptr(), color, path);
 	}
