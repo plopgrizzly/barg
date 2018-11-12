@@ -222,7 +222,7 @@ pub fn init() {
 }
 
 #[inline(always)]
-pub fn rasterize<O: FnMut(usize, usize, f32)>(
+pub fn rasterize<O: FnMut(usize, usize, u8, f32, f32)>(
 	lines: &[Line],
 	curves: &[Curve],
 	width: usize,
@@ -260,8 +260,9 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 			|| !active_lines_y.is_empty()
 			|| !active_curves_y.is_empty())
 	{
-		let lower = y as f32;
-		let upper = (y + 1) as f32;
+        let yf = y as f32;
+		let lower = yf;
+		let upper = yf + 1.0;
 		// Add newly active segments
 		for &(ref line, ref bb) in lines[next_line..].iter().take_while(|p| p.1.min.y < upper) {
 			let planes = PlaneSet {
@@ -323,6 +324,7 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 			let mut next_curve = 0;
 			let mut x = 0;
 			let mut acc = 0.0;
+            
 			active_lines_x.clear();
 			active_curves_x.clear();
 			while x < width
@@ -331,9 +333,10 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 					|| !active_lines_x.is_empty()
 					|| !active_curves_x.is_empty())
 			{
-				let offset = vector(x as f32, y as f32);
+                let xf = x as f32;
+				let offset = vector(x as f32, yf);
 				let lower = x as f32;
-				let upper = (x + 1) as f32;
+				let upper = xf + 1.0;
 				//add newly active segments
 				for &(ref line, (_, ref max)) in scanline_lines[next_line..]
 					.iter()
@@ -399,7 +402,7 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 					}
 				}
 				//output
-				output(x, y, pixel_value.abs());
+				output(x, y, (pixel_value.abs() * 255.0) as u8, xf, yf);
 				acc += pixel_acc;
 				// remove deactivated segments
 				for k in lines_to_remove.drain(..).rev() {
@@ -412,7 +415,8 @@ pub fn rasterize<O: FnMut(usize, usize, f32)>(
 			}
 			// fill remaining pixels
 			for x in x..width {
-				output(x, y, acc.abs());
+                let xf = x as f32;
+				output(x, y, (acc.abs() * 255.0) as u8, xf, yf);
 			}
 		}
 		y += 1;
