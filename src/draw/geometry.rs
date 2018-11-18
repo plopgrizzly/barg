@@ -43,13 +43,19 @@ pub fn vector<N>(x: N, y: N) -> Vector<N> {
 
 impl<T> Into<Vector<T>> for Point<T> {
     fn into(self) -> Vector<T> {
-        Vector { x: self.x, y: self.y }
+        Vector {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 
 impl<T> Into<Point<T>> for Vector<T> {
     fn into(self) -> Point<T> {
-        Point { x: self.x, y: self.y }
+        Point {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 

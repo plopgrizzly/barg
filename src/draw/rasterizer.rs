@@ -1,200 +1,200 @@
-use arrayvec;
-use super::geometry;
-use ordered_float::OrderedFloat;
 use self::geometry::*;
+use super::geometry;
+use arrayvec;
+use ordered_float::OrderedFloat;
 
 trait SliceUp: Sized {
-	type PerSlice: Iterator<Item = Self>;
-	type Out: Iterator<Item = Self::PerSlice>;
-	fn slice_up_x(&self, planes: PlaneSet) -> Self::Out;
-	fn slice_up_y(&self, planes: PlaneSet) -> Self::Out;
+    type PerSlice: Iterator<Item = Self>;
+    type Out: Iterator<Item = Self::PerSlice>;
+    fn slice_up_x(&self, planes: PlaneSet) -> Self::Out;
+    fn slice_up_y(&self, planes: PlaneSet) -> Self::Out;
 }
 
 type LineIter = ::std::option::IntoIter<Line>;
 
 #[derive(Debug)]
 struct LineSliceIter {
-	l: Line,
-	m: f32,
-	c: f32,
-	planes: PlaneSet,
-	i: usize,
+    l: Line,
+    m: f32,
+    c: f32,
+    planes: PlaneSet,
+    i: usize,
 }
 
 impl Iterator for LineSliceIter {
-	type Item = LineIter;
-	fn next(&mut self) -> Option<LineIter> {
-		if self.i >= self.planes.count {
-			return None;
-		}
-		if self.m == 0.0 {
-			self.i += 1;
-			return Some(Some(self.l).into_iter());
-		}
-		let lower = self.i as f32;
-		let upper = lower + 1.0;
-		let lower_d = self.planes.start + self.planes.step * lower;
-		let upper_d = self.planes.start + self.planes.step * upper;
-		let mut lower_t = (lower_d - self.c) / self.m;
-		let mut upper_t = (upper_d - self.c) / self.m;
-		lower_t = lower_t.max(0.0).min(1.0);
-		upper_t = upper_t.max(0.0).min(1.0);
-		if self.m < 0.0 {
-			::std::mem::swap(&mut lower_t, &mut upper_t);
-		}
-		self.i += 1;
-		if !relative_eq!(lower_t, upper_t) {
-			let p = &self.l.p;
-			let v = p[1] - p[0];
-			Some(
-				Some(Line {
-					p: [p[0] + v * lower_t, p[0] + v * upper_t],
-				}).into_iter(),
-			)
-		} else {
-			Some(None.into_iter())
-		}
-	}
+    type Item = LineIter;
+    fn next(&mut self) -> Option<LineIter> {
+        if self.i >= self.planes.count {
+            return None;
+        }
+        if self.m == 0.0 {
+            self.i += 1;
+            return Some(Some(self.l).into_iter());
+        }
+        let lower = self.i as f32;
+        let upper = lower + 1.0;
+        let lower_d = self.planes.start + self.planes.step * lower;
+        let upper_d = self.planes.start + self.planes.step * upper;
+        let mut lower_t = (lower_d - self.c) / self.m;
+        let mut upper_t = (upper_d - self.c) / self.m;
+        lower_t = lower_t.max(0.0).min(1.0);
+        upper_t = upper_t.max(0.0).min(1.0);
+        if self.m < 0.0 {
+            ::std::mem::swap(&mut lower_t, &mut upper_t);
+        }
+        self.i += 1;
+        if !relative_eq!(lower_t, upper_t) {
+            let p = &self.l.p;
+            let v = p[1] - p[0];
+            Some(
+                Some(Line {
+                    p: [p[0] + v * lower_t, p[0] + v * upper_t],
+                }).into_iter(),
+            )
+        } else {
+            Some(None.into_iter())
+        }
+    }
 }
 
 impl SliceUp for Line {
-	type PerSlice = LineIter;
-	type Out = LineSliceIter;
-	fn slice_up_x(&self, planes: PlaneSet) -> LineSliceIter {
-		let p = &self.p;
-		LineSliceIter {
-			l: *self,
-			planes,
-			i: 0,
-			m: p[1].x - p[0].x,
-			c: p[0].x,
-		}
-	}
-	fn slice_up_y(&self, planes: PlaneSet) -> LineSliceIter {
-		let p = &self.p;
-		LineSliceIter {
-			l: *self,
-			planes,
-			i: 0,
-			m: p[1].y - p[0].y,
-			c: p[0].y,
-		}
-	}
+    type PerSlice = LineIter;
+    type Out = LineSliceIter;
+    fn slice_up_x(&self, planes: PlaneSet) -> LineSliceIter {
+        let p = &self.p;
+        LineSliceIter {
+            l: *self,
+            planes,
+            i: 0,
+            m: p[1].x - p[0].x,
+            c: p[0].x,
+        }
+    }
+    fn slice_up_y(&self, planes: PlaneSet) -> LineSliceIter {
+        let p = &self.p;
+        LineSliceIter {
+            l: *self,
+            planes,
+            i: 0,
+            m: p[1].y - p[0].y,
+            c: p[0].y,
+        }
+    }
 }
 
 type CurveIter = arrayvec::IntoIter<[Curve; 2]>;
 
 struct CurveSliceIter {
-	curve: Curve,
-	planes: PlaneSet,
-	i: usize,
-	a: f32,
-	b: f32,
-	c_shift: f32,
+    curve: Curve,
+    planes: PlaneSet,
+    i: usize,
+    a: f32,
+    b: f32,
+    c_shift: f32,
 }
 
 impl Iterator for CurveSliceIter {
-	type Item = CurveIter;
-	fn next(&mut self) -> Option<Self::Item> {
-		use arrayvec::ArrayVec;
-		use self::geometry::solve_quadratic_real as solve;
-		use self::geometry::Cut;
-		use self::geometry::RealQuadraticSolution as RQS;
-		if self.i >= self.planes.count {
-			return None;
-		}
-		let lower = self.i as f32;
-		self.i += 1;
-		let upper = lower + self.planes.step;
-		let lower_d = self.planes.start + self.planes.step * lower;
-		let upper_d = self.planes.start + self.planes.step * upper;
-		let l_sol = solve(self.a, self.b, self.c_shift - lower_d);
-		let u_sol = solve(self.a, self.b, self.c_shift - upper_d);
-		let mut result = ArrayVec::<[Curve; 2]>::new();
-		match (l_sol.in_order(), u_sol.in_order()) {
-			(RQS::Two(a, b), RQS::Two(c, d)) => {
-				// Two pieces
-				let (a, b, c, d) = if self.a > 0.0 {
-					(c, a, b, d)
-				} else {
-					(a, c, d, b)
-				};
-				let (a, b, c, d) = (
-					a.min(1.0).max(0.0),
-					b.min(1.0).max(0.0),
-					c.min(1.0).max(0.0),
-					d.min(1.0).max(0.0),
-				);
-				if !relative_eq!(a, b) {
-					result.push(self.curve.cut_from_to(a, b));
-				}
-				if !relative_eq!(c, d) {
-					result.push(self.curve.cut_from_to(c, d));
-				}
-			}
-			(RQS::Two(a, b), RQS::None)
-			| (RQS::Two(a, b), RQS::Touch(_))
-			| (RQS::None, RQS::Two(a, b))
-			| (RQS::Touch(_), RQS::Two(a, b))
-			| (RQS::One(a), RQS::One(b)) => {
-				// One piece
-				let (a, b) = if a > b { (b, a) } else { (a, b) };
-				let a = a.min(1.0).max(0.0);
-				let b = b.min(1.0).max(0.0);
-				if !relative_eq!(a, b) {
-					result.push(self.curve.cut_from_to(a, b));
-				}
-			}
-			(RQS::All, RQS::None) | (RQS::None, RQS::All) => {
-				// coincident with one plane
-				result.push(self.curve);
-			}
-			(RQS::None, RQS::None) => if self.a == 0.0
-				&& self.b == 0.0
-				&& self.c_shift >= lower_d
-				&& self.c_shift <= upper_d
-			{
-				// parallel to planes, inbetween
-				result.push(self.curve);
-			},
-			_ => unreachable!(), // impossible
-		}
-		Some(result.into_iter())
-	}
+    type Item = CurveIter;
+    fn next(&mut self) -> Option<Self::Item> {
+        use self::geometry::solve_quadratic_real as solve;
+        use self::geometry::Cut;
+        use self::geometry::RealQuadraticSolution as RQS;
+        use arrayvec::ArrayVec;
+        if self.i >= self.planes.count {
+            return None;
+        }
+        let lower = self.i as f32;
+        self.i += 1;
+        let upper = lower + self.planes.step;
+        let lower_d = self.planes.start + self.planes.step * lower;
+        let upper_d = self.planes.start + self.planes.step * upper;
+        let l_sol = solve(self.a, self.b, self.c_shift - lower_d);
+        let u_sol = solve(self.a, self.b, self.c_shift - upper_d);
+        let mut result = ArrayVec::<[Curve; 2]>::new();
+        match (l_sol.in_order(), u_sol.in_order()) {
+            (RQS::Two(a, b), RQS::Two(c, d)) => {
+                // Two pieces
+                let (a, b, c, d) = if self.a > 0.0 {
+                    (c, a, b, d)
+                } else {
+                    (a, c, d, b)
+                };
+                let (a, b, c, d) = (
+                    a.min(1.0).max(0.0),
+                    b.min(1.0).max(0.0),
+                    c.min(1.0).max(0.0),
+                    d.min(1.0).max(0.0),
+                );
+                if !relative_eq!(a, b) {
+                    result.push(self.curve.cut_from_to(a, b));
+                }
+                if !relative_eq!(c, d) {
+                    result.push(self.curve.cut_from_to(c, d));
+                }
+            }
+            (RQS::Two(a, b), RQS::None)
+            | (RQS::Two(a, b), RQS::Touch(_))
+            | (RQS::None, RQS::Two(a, b))
+            | (RQS::Touch(_), RQS::Two(a, b))
+            | (RQS::One(a), RQS::One(b)) => {
+                // One piece
+                let (a, b) = if a > b { (b, a) } else { (a, b) };
+                let a = a.min(1.0).max(0.0);
+                let b = b.min(1.0).max(0.0);
+                if !relative_eq!(a, b) {
+                    result.push(self.curve.cut_from_to(a, b));
+                }
+            }
+            (RQS::All, RQS::None) | (RQS::None, RQS::All) => {
+                // coincident with one plane
+                result.push(self.curve);
+            }
+            (RQS::None, RQS::None) => if self.a == 0.0
+                && self.b == 0.0
+                && self.c_shift >= lower_d
+                && self.c_shift <= upper_d
+            {
+                // parallel to planes, inbetween
+                result.push(self.curve);
+            },
+            _ => unreachable!(), // impossible
+        }
+        Some(result.into_iter())
+    }
 }
 
 #[derive(Debug)]
 struct PlaneSet {
-	start: f32,
-	step: f32,
-	count: usize,
+    start: f32,
+    step: f32,
+    count: usize,
 }
 
 impl SliceUp for Curve {
-	type PerSlice = CurveIter;
-	type Out = CurveSliceIter;
-	fn slice_up_x(&self, planes: PlaneSet) -> CurveSliceIter {
-		let p = &self.p;
-		CurveSliceIter {
-			curve: *self,
-			planes,
-			i: 0,
-			a: p[0].x - 2.0 * p[1].x + p[2].x,
-			b: 2.0 * (p[1].x - p[0].x),
-			c_shift: p[0].x,
-		}
-	}
-	fn slice_up_y(&self, planes: PlaneSet) -> CurveSliceIter {
-		let p = &self.p;
-		CurveSliceIter {
-			curve: *self,
-			planes,
-			i: 0,
-			a: p[0].y - 2.0 * p[1].y + p[2].y,
-			b: 2.0 * (p[1].y - p[0].y),
-			c_shift: p[0].y,
-		}
-	}
+    type PerSlice = CurveIter;
+    type Out = CurveSliceIter;
+    fn slice_up_x(&self, planes: PlaneSet) -> CurveSliceIter {
+        let p = &self.p;
+        CurveSliceIter {
+            curve: *self,
+            planes,
+            i: 0,
+            a: p[0].x - 2.0 * p[1].x + p[2].x,
+            b: 2.0 * (p[1].x - p[0].x),
+            c_shift: p[0].x,
+        }
+    }
+    fn slice_up_y(&self, planes: PlaneSet) -> CurveSliceIter {
+        let p = &self.p;
+        CurveSliceIter {
+            curve: *self,
+            planes,
+            i: 0,
+            a: p[0].y - 2.0 * p[1].y + p[2].y,
+            b: 2.0 * (p[1].y - p[0].y),
+            c_shift: p[0].y,
+        }
+    }
 }
 
 static mut ACTIVE_LINES_Y: Option<Vec<LineSliceIter>> = None;
@@ -209,225 +209,231 @@ static mut CURVES_TO_REMOVE: Option<Vec<usize>> = None;
 
 #[inline(always)]
 pub fn init() {
-	unsafe {
-		ACTIVE_LINES_Y = Some(Vec::new());
-		ACTIVE_CURVES_Y = Some(Vec::new());
-		ACTIVE_LINES_X = Some(Vec::new());
-		ACTIVE_CURVES_X = Some(Vec::new());
-		SCANLINE_LINES = Some(Vec::new());
-		LINES_TO_REMOVE = Some(Vec::new());
-		SCANLINE_CURVES = Some(Vec::new());
-		CURVES_TO_REMOVE = Some(Vec::new());
-	}
+    unsafe {
+        ACTIVE_LINES_Y = Some(Vec::new());
+        ACTIVE_CURVES_Y = Some(Vec::new());
+        ACTIVE_LINES_X = Some(Vec::new());
+        ACTIVE_CURVES_X = Some(Vec::new());
+        SCANLINE_LINES = Some(Vec::new());
+        LINES_TO_REMOVE = Some(Vec::new());
+        SCANLINE_CURVES = Some(Vec::new());
+        CURVES_TO_REMOVE = Some(Vec::new());
+    }
 }
 
 #[inline(always)]
 pub fn rasterize<O: FnMut(usize, usize, u8, f32, f32)>(
-	lines: &[Line],
-	curves: &[Curve],
-	width: usize,
-	height: usize,
-	mut output: O,
+    lines: &[Line],
+    curves: &[Curve],
+    width: usize,
+    height: usize,
+    mut output: O,
 ) {
-	let mut lines: Vec<_> = lines.iter().map(|&l| (l, l.bounding_box())).collect();
-	lines.sort_by_key(|&(_, ref a)| OrderedFloat(a.min.y));
-	let mut curves: Vec<_> = curves.iter().map(|&c| (c, c.bounding_box())).collect();
-	curves.sort_by_key(|&(_, ref a)| OrderedFloat(a.min.y));
-	let mut y = 0;
-	let mut next_line = 0;
-	let mut next_curve = 0;
-	let mut active_lines_y: Vec<LineSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_LINES_Y)};
-	let mut active_curves_y: Vec<CurveSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_CURVES_Y)};
-	let mut active_lines_x: Vec<LineSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_LINES_X)};
-	let mut active_curves_x: Vec<CurveSliceIter> = unsafe {::std::mem::transmute_copy(&ACTIVE_CURVES_X)};
-	let mut scanline_lines: Vec<(Line, (f32, f32))> = unsafe {::std::mem::transmute_copy(&SCANLINE_LINES)};
-	let mut lines_to_remove: Vec<usize> = unsafe {::std::mem::transmute_copy(&LINES_TO_REMOVE)};
-	let mut scanline_curves: Vec<(Curve, (f32, f32))> = unsafe {::std::mem::transmute_copy(&SCANLINE_CURVES)};
-	let mut curves_to_remove: Vec<usize> = unsafe {::std::mem::transmute_copy(&CURVES_TO_REMOVE)};
+    let mut lines: Vec<_> = lines.iter().map(|&l| (l, l.bounding_box())).collect();
+    lines.sort_by_key(|&(_, ref a)| OrderedFloat(a.min.y));
+    let mut curves: Vec<_> = curves.iter().map(|&c| (c, c.bounding_box())).collect();
+    curves.sort_by_key(|&(_, ref a)| OrderedFloat(a.min.y));
+    let mut y = 0;
+    let mut next_line = 0;
+    let mut next_curve = 0;
+    let mut active_lines_y: Vec<LineSliceIter> =
+        unsafe { ::std::mem::transmute_copy(&ACTIVE_LINES_Y) };
+    let mut active_curves_y: Vec<CurveSliceIter> =
+        unsafe { ::std::mem::transmute_copy(&ACTIVE_CURVES_Y) };
+    let mut active_lines_x: Vec<LineSliceIter> =
+        unsafe { ::std::mem::transmute_copy(&ACTIVE_LINES_X) };
+    let mut active_curves_x: Vec<CurveSliceIter> =
+        unsafe { ::std::mem::transmute_copy(&ACTIVE_CURVES_X) };
+    let mut scanline_lines: Vec<(Line, (f32, f32))> =
+        unsafe { ::std::mem::transmute_copy(&SCANLINE_LINES) };
+    let mut lines_to_remove: Vec<usize> = unsafe { ::std::mem::transmute_copy(&LINES_TO_REMOVE) };
+    let mut scanline_curves: Vec<(Curve, (f32, f32))> =
+        unsafe { ::std::mem::transmute_copy(&SCANLINE_CURVES) };
+    let mut curves_to_remove: Vec<usize> = unsafe { ::std::mem::transmute_copy(&CURVES_TO_REMOVE) };
 
-	active_lines_y.clear();
-	active_curves_y.clear();
-	active_lines_x.clear();
-	active_curves_x.clear();
-	scanline_lines.clear();
-	lines_to_remove.clear();
-	scanline_curves.clear();
-	curves_to_remove.clear();
+    active_lines_y.clear();
+    active_curves_y.clear();
+    active_lines_x.clear();
+    active_curves_x.clear();
+    scanline_lines.clear();
+    lines_to_remove.clear();
+    scanline_curves.clear();
+    curves_to_remove.clear();
 
-	while y < height
-		&& (next_line != lines.len()
-			|| next_curve != curves.len()
-			|| !active_lines_y.is_empty()
-			|| !active_curves_y.is_empty())
-	{
+    while y < height
+        && (next_line != lines.len()
+            || next_curve != curves.len()
+            || !active_lines_y.is_empty()
+            || !active_curves_y.is_empty())
+    {
         let yf = y as f32;
-		let lower = yf;
-		let upper = yf + 1.0;
-		// Add newly active segments
-		for &(ref line, ref bb) in lines[next_line..].iter().take_while(|p| p.1.min.y < upper) {
-			let planes = PlaneSet {
-				start: lower,
-				step: 1.0,
-				count: (bb.max.y.ceil() - lower).max(1.0) as usize,
-			};
-			active_lines_y.push(line.slice_up_y(planes));
-			next_line += 1;
-		}
-		for &(ref curve, ref bb) in curves[next_curve..]
-			.iter()
-			.take_while(|p| p.1.min.y < upper)
-		{
-			let planes = PlaneSet {
-				start: lower,
-				step: 1.0,
-				count: (bb.max.y.ceil() - lower).max(1.0) as usize,
-			};
-			active_curves_y.push(curve.slice_up_y(planes));
-			next_curve += 1;
-		}
-		// get y sliced segments for this scanline
-		scanline_lines.clear();
-		scanline_curves.clear();
+        let lower = yf;
+        let upper = yf + 1.0;
+        // Add newly active segments
+        for &(ref line, ref bb) in lines[next_line..].iter().take_while(|p| p.1.min.y < upper) {
+            let planes = PlaneSet {
+                start: lower,
+                step: 1.0,
+                count: (bb.max.y.ceil() - lower).max(1.0) as usize,
+            };
+            active_lines_y.push(line.slice_up_y(planes));
+            next_line += 1;
+        }
+        for &(ref curve, ref bb) in curves[next_curve..]
+            .iter()
+            .take_while(|p| p.1.min.y < upper)
+        {
+            let planes = PlaneSet {
+                start: lower,
+                step: 1.0,
+                count: (bb.max.y.ceil() - lower).max(1.0) as usize,
+            };
+            active_curves_y.push(curve.slice_up_y(planes));
+            next_curve += 1;
+        }
+        // get y sliced segments for this scanline
+        scanline_lines.clear();
+        scanline_curves.clear();
 
-		for (k, itr) in active_lines_y.iter_mut().enumerate() {
-			if let Some(itr) = itr.next() {
-				for line in itr {
-					scanline_lines.push((line, line.x_bounds()))
-				}
-			} else {
-				lines_to_remove.push(k);
-			}
-		}
-		for (k, itr) in active_curves_y.iter_mut().enumerate() {
-			if let Some(itr) = itr.next() {
-				for curve in itr {
-					scanline_curves.push((curve, curve.x_bounds()))
-				}
-			} else {
-				curves_to_remove.push(k);
-			}
-		}
-		// remove deactivated segments
-		for k in lines_to_remove.drain(..).rev() {
-			active_lines_y.swap_remove(k);
-		}
-		for k in curves_to_remove.drain(..).rev() {
-			active_curves_y.swap_remove(k);
-		}
-		// sort scanline for traversal
-		scanline_lines.sort_by_key(|a| OrderedFloat((a.1).0));
-		scanline_curves.sort_by_key(|a| OrderedFloat((a.1).0));
-		// Iterate through x, slice scanline segments into each cell.
-		// Evaluate, accumulate and output.
-		{
-			let mut next_line = 0;
-			let mut next_curve = 0;
-			let mut x = 0;
-			let mut acc = 0.0;
-            
-			active_lines_x.clear();
-			active_curves_x.clear();
-			while x < width
-				&& (next_line != scanline_lines.len()
-					|| next_curve != scanline_curves.len()
-					|| !active_lines_x.is_empty()
-					|| !active_curves_x.is_empty())
-			{
+        for (k, itr) in active_lines_y.iter_mut().enumerate() {
+            if let Some(itr) = itr.next() {
+                for line in itr {
+                    scanline_lines.push((line, line.x_bounds()))
+                }
+            } else {
+                lines_to_remove.push(k);
+            }
+        }
+        for (k, itr) in active_curves_y.iter_mut().enumerate() {
+            if let Some(itr) = itr.next() {
+                for curve in itr {
+                    scanline_curves.push((curve, curve.x_bounds()))
+                }
+            } else {
+                curves_to_remove.push(k);
+            }
+        }
+        // remove deactivated segments
+        for k in lines_to_remove.drain(..).rev() {
+            active_lines_y.swap_remove(k);
+        }
+        for k in curves_to_remove.drain(..).rev() {
+            active_curves_y.swap_remove(k);
+        }
+        // sort scanline for traversal
+        scanline_lines.sort_by_key(|a| OrderedFloat((a.1).0));
+        scanline_curves.sort_by_key(|a| OrderedFloat((a.1).0));
+        // Iterate through x, slice scanline segments into each cell.
+        // Evaluate, accumulate and output.
+        {
+            let mut next_line = 0;
+            let mut next_curve = 0;
+            let mut x = 0;
+            let mut acc = 0.0;
+
+            active_lines_x.clear();
+            active_curves_x.clear();
+            while x < width
+                && (next_line != scanline_lines.len()
+                    || next_curve != scanline_curves.len()
+                    || !active_lines_x.is_empty()
+                    || !active_curves_x.is_empty())
+            {
                 let xf = x as f32;
-				let offset = vector(x as f32, yf);
-				let lower = x as f32;
-				let upper = xf + 1.0;
-				//add newly active segments
-				for &(ref line, (_, ref max)) in scanline_lines[next_line..]
-					.iter()
-					.take_while(|p| (p.1).0 < upper)
-				{
-					let planes = PlaneSet {
-						start: lower,
-						step: 1.0,
-						count: (max.ceil() - lower).max(1.0) as usize,
-					};
-					active_lines_x.push(line.slice_up_x(planes));
-					next_line += 1;
-				}
-				for &(ref curve, (_, ref max)) in scanline_curves[next_curve..]
-					.iter()
-					.take_while(|p| (p.1).0 < upper)
-				{
-					let planes = PlaneSet {
-						start: lower,
-						step: 1.0,
-						count: (max.ceil() - lower).max(1.0) as usize,
-					};
-					active_curves_x.push(curve.slice_up_x(planes));
-					next_curve += 1;
-				}
-				//process x sliced segments for this pixel
-				let mut pixel_value = acc;
-				let mut pixel_acc = 0.0;
-				for (k, itr) in active_lines_x.iter_mut().enumerate() {
-					if let Some(itr) = itr.next() {
-						for mut line in itr {
-							let p = &mut line.p;
-							p[0] = p[0] - offset;
-							p[1] = p[1] - offset;
+                let offset = vector(x as f32, yf);
+                let lower = x as f32;
+                let upper = xf + 1.0;
+                //add newly active segments
+                for &(ref line, (_, ref max)) in scanline_lines[next_line..]
+                    .iter()
+                    .take_while(|p| (p.1).0 < upper)
+                {
+                    let planes = PlaneSet {
+                        start: lower,
+                        step: 1.0,
+                        count: (max.ceil() - lower).max(1.0) as usize,
+                    };
+                    active_lines_x.push(line.slice_up_x(planes));
+                    next_line += 1;
+                }
+                for &(ref curve, (_, ref max)) in scanline_curves[next_curve..]
+                    .iter()
+                    .take_while(|p| (p.1).0 < upper)
+                {
+                    let planes = PlaneSet {
+                        start: lower,
+                        step: 1.0,
+                        count: (max.ceil() - lower).max(1.0) as usize,
+                    };
+                    active_curves_x.push(curve.slice_up_x(planes));
+                    next_curve += 1;
+                }
+                //process x sliced segments for this pixel
+                let mut pixel_value = acc;
+                let mut pixel_acc = 0.0;
+                for (k, itr) in active_lines_x.iter_mut().enumerate() {
+                    if let Some(itr) = itr.next() {
+                        for mut line in itr {
+                            let p = &mut line.p;
+                            p[0] = p[0] - offset;
+                            p[1] = p[1] - offset;
 
-							let a = p[0].y - p[1].y;
-							let v = (1.0 - (p[0].x + p[1].x) * 0.5) * a;
-							pixel_value += v;
-							pixel_acc += a;
-						}
-					} else {
-						lines_to_remove.push(k);
-					}
-				}
-				for (k, itr) in active_curves_x.iter_mut().enumerate() {
-					if let Some(itr) = itr.next() {
-						for mut curve in itr {
-							let p = &mut curve.p;
-							p[0] = p[0] - offset;
-							p[1] = p[1] - offset;
-							p[2] = p[2] - offset;
-							let a = p[0].y - p[2].y;
-							let b = p[0].y - p[1].y;
-							let c = p[1].y - p[2].y;
-							let v = (b * (6.0 - 3.0 * p[0].x - 2.0 * p[1].x - p[2].x)
-								+ c * (6.0 - p[0].x - 2.0 * p[1].x - 3.0 * p[2].x))
-								/ 6.0;
-							pixel_value += v;
-							pixel_acc += a;
-						}
-					} else {
-						curves_to_remove.push(k);
-					}
-				}
-				//output
-				output(x, y, (pixel_value.abs() * 255.0) as u8, xf, yf);
-				acc += pixel_acc;
-				// remove deactivated segments
-				for k in lines_to_remove.drain(..).rev() {
-					active_lines_x.swap_remove(k);
-				}
-				for k in curves_to_remove.drain(..).rev() {
-					active_curves_x.swap_remove(k);
-				}
-				x += 1;
-			}
-			// fill remaining pixels
-			for x in x..width {
+                            let a = p[0].y - p[1].y;
+                            let v = (1.0 - (p[0].x + p[1].x) * 0.5) * a;
+                            pixel_value += v;
+                            pixel_acc += a;
+                        }
+                    } else {
+                        lines_to_remove.push(k);
+                    }
+                }
+                for (k, itr) in active_curves_x.iter_mut().enumerate() {
+                    if let Some(itr) = itr.next() {
+                        for mut curve in itr {
+                            let p = &mut curve.p;
+                            p[0] = p[0] - offset;
+                            p[1] = p[1] - offset;
+                            p[2] = p[2] - offset;
+                            let a = p[0].y - p[2].y;
+                            let b = p[0].y - p[1].y;
+                            let c = p[1].y - p[2].y;
+                            let v = (b * (6.0 - 3.0 * p[0].x - 2.0 * p[1].x - p[2].x)
+                                + c * (6.0 - p[0].x - 2.0 * p[1].x - 3.0 * p[2].x))
+                                / 6.0;
+                            pixel_value += v;
+                            pixel_acc += a;
+                        }
+                    } else {
+                        curves_to_remove.push(k);
+                    }
+                }
+                //output
+                output(x, y, (pixel_value.abs() * 255.0) as u8, xf, yf);
+                acc += pixel_acc;
+                // remove deactivated segments
+                for k in lines_to_remove.drain(..).rev() {
+                    active_lines_x.swap_remove(k);
+                }
+                for k in curves_to_remove.drain(..).rev() {
+                    active_curves_x.swap_remove(k);
+                }
+                x += 1;
+            }
+            // fill remaining pixels
+            for x in x..width {
                 let xf = x as f32;
-				output(x, y, (acc.abs() * 255.0) as u8, xf, yf);
-			}
-		}
-		y += 1;
-	}
+                output(x, y, (acc.abs() * 255.0) as u8, xf, yf);
+            }
+        }
+        y += 1;
+    }
 
-	unsafe {ACTIVE_LINES_Y = ::std::mem::transmute_copy(&ACTIVE_LINES_Y)};
-	unsafe {ACTIVE_CURVES_Y = ::std::mem::transmute_copy(&ACTIVE_CURVES_Y)};
-	unsafe {ACTIVE_LINES_X = ::std::mem::transmute_copy(&ACTIVE_LINES_X)};
-	unsafe {ACTIVE_CURVES_X = ::std::mem::transmute_copy(&ACTIVE_CURVES_X)};
-	unsafe {SCANLINE_LINES = ::std::mem::transmute_copy(&SCANLINE_LINES)};
-	unsafe {LINES_TO_REMOVE = ::std::mem::transmute_copy(&LINES_TO_REMOVE)};
-	unsafe {SCANLINE_CURVES = ::std::mem::transmute_copy(&SCANLINE_CURVES)};
-	unsafe {CURVES_TO_REMOVE = ::std::mem::transmute_copy(&CURVES_TO_REMOVE)};
+    unsafe { ACTIVE_LINES_Y = ::std::mem::transmute_copy(&ACTIVE_LINES_Y) };
+    unsafe { ACTIVE_CURVES_Y = ::std::mem::transmute_copy(&ACTIVE_CURVES_Y) };
+    unsafe { ACTIVE_LINES_X = ::std::mem::transmute_copy(&ACTIVE_LINES_X) };
+    unsafe { ACTIVE_CURVES_X = ::std::mem::transmute_copy(&ACTIVE_CURVES_X) };
+    unsafe { SCANLINE_LINES = ::std::mem::transmute_copy(&SCANLINE_LINES) };
+    unsafe { LINES_TO_REMOVE = ::std::mem::transmute_copy(&LINES_TO_REMOVE) };
+    unsafe { SCANLINE_CURVES = ::std::mem::transmute_copy(&SCANLINE_CURVES) };
+    unsafe { CURVES_TO_REMOVE = ::std::mem::transmute_copy(&CURVES_TO_REMOVE) };
 }
