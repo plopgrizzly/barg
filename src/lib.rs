@@ -216,20 +216,113 @@ impl SurfaceInfo {
     }
 }
 
-/// A Raster Image
-// TODO: Replace Surface
-pub struct Raster {
-    raster: footile::Raster
+/// An Image
+pub struct Image<'a> {
+    plotter: footile::Plotter<footile::Rgba8>,
+    raster: Option<footile::LinkRaster<'a, footile::Rgba8>>,
 }
 
-impl Raster {
-    pub fn new(size: Size) -> Self {
-        Raster {
-            raster: footile::Raster::new(size.0 as u32, size.1 as u32)
+impl<'a> Image<'a> {
+    /// Create a new Image from a pointer.
+    pub fn from_ptr(size: Size, pixels: *mut u8) -> Image<'a> {
+        let len = size.0 as usize * size.1 as usize * 4;
+        Image::from_slice(size, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+    }
+
+    /// Create a new Image from a pixel slice.
+    pub fn from_slice(size: Size, pixels: &'a mut [u8]) -> Image<'a> {
+        let (w, h) = (size.0 as u32, size.1 as u32);
+
+        let (_, pixels, _) = unsafe {
+            pixels.align_to_mut::<footile::Rgba8>()
+        };
+
+        Image {
+            plotter: footile::Plotter::new(w, h),
+            raster: Some(footile::LinkRaster::new(w, h, pixels)),
         }
     }
 
+    /// Create new Image.
+    pub fn new(size: Size) -> Self {
+        let (w, h) = (size.0 as u32, size.1 as u32);
 
+        Image {
+            plotter: footile::Plotter::new(w, h),
+            raster: None,
+        }
+    }
+
+    /// Clear the Image.
+    pub fn clear(&mut self) {
+        if let Some(ref mut raster) = self.raster {
+            raster.clear();
+        } else if let Some(ref mut raster) = self.plotter.raster() {
+            raster.clear();
+        }
+    }
+
+    /// Draw a path a solid color (sRGBA).
+    pub fn draw<'b, T>(&mut self, color: [u8; 4], path: T)
+    where
+        T: IntoIterator<Item = &'b PathOp>,
+    {
+        let iter = path.into_iter();
+        let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
+
+        if let Some(ref mut raster) = self.raster {
+            self.plotter
+                .fill(iter, footile::FillRule::NonZero)
+                .over_link(color, raster);
+        } else {
+            self.plotter
+                .fill(iter, footile::FillRule::NonZero)
+                .over(color);
+        }
+
+/*        let iter = path.into_iter();
+
+        draw::draw(
+            pixbuf,
+            self.size,
+            self.pitch,
+            iter,
+            color,
+            &mut self.lines,
+            &mut self.curves,
+            self.sizef.0,
+            self.sizef.1,
+        );*/
+    }
+
+    /// Draw text.
+    pub fn text(
+        &mut self,
+        color: [u8; 4],
+        xysize: (f32, f32, f32),
+        font: &'a Font,
+        text: &str,
+    ) {
+        let mut x = xysize.0;
+        let mut y = xysize.1;
+        let size = xysize.2;
+
+        // Loop through the glyphs in the text, adding to the SVG.
+        for g in font.glyphs(text, (size, size)) {
+            // Check for newline
+            if g.2 {
+                x = xysize.0;
+                y += size;
+                continue;
+            }
+
+            // Draw the glyph
+            self.draw(color, g.0.draw(x, y).iter());
+
+            // Position next glyph
+            x += g.1;
+        }
+    }
 }
 
 /// An sRGBA Surface.
