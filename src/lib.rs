@@ -17,16 +17,8 @@
 //!
 //! Alpha blending will be done backwards.  No matter what faces that are closest to the camera will always be drawn first.  The alpha value will be stored on the surface we're rendering to.  If it's 255 then pixels will be culled.  If it's less faces will be blended behind the face currently in the render buffer.
 
-extern crate afi;
-extern crate ami;
-extern crate arrayvec;
 extern crate fonterator;
-extern crate ordered_float;
-#[macro_use]
-extern crate approx;
 extern crate footile;
-
-mod draw;
 
 /// The default font.
 pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
@@ -42,179 +34,6 @@ pub struct Size(pub u16, pub u16);
 /// Texture Coordinates (Mapped to a `PathOp`).
 #[derive(Copy, Clone)]
 pub struct TexCoord(pub f32, pub f32);
-
-pub struct LinkSurface<'b>(&'b mut SurfaceInfo, *mut u8);
-
-impl<'b> LinkSurface<'b> {
-    /// New LinkSurface.
-    #[inline(always)]
-    pub fn new(info: &'b mut SurfaceInfo, pixbuf: *mut u8) -> LinkSurface {
-        LinkSurface(info, pixbuf)
-    }
-
-    /// Clear
-    #[inline(always)]
-    pub fn clear(&self) {
-        self.0.clear(self.1)
-    }
-
-    /// Draw a path a solid color (sRGBA).
-    #[inline(always)]
-    pub fn draw<'a, T>(&mut self, color: [u8; 4], path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        self.0.draw(self.1, color, path);
-    }
-
-    /// Draw a path a solid color (sRGBA).
-    #[inline(always)]
-    pub fn path<'a, T>(&mut self, color: [u8; 4], path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        self.0.path(self.1, color, path);
-    }
-
-    /// Draw a path with a bitmap picture (sRGBA).
-    #[inline(always)]
-    pub fn bitmap<'a, T>(&mut self, color: (u16, u16, &[[u8; 4]]), path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        self.0.bitmap(self.1, color, path);
-    }
-
-    /// Draw text.
-    #[inline(always)]
-    pub fn text(&mut self, color: [u8; 4], xysize: (f32, f32, f32), font: &Font, text: &str) {
-        self.0.text(self.1, color, xysize, font, text);
-    }
-}
-
-/// Surface Information.
-pub struct SurfaceInfo {
-    pub size: Size,
-    sizef: (f32, f32),
-    lines: Vec<draw::Line>,
-    curves: Vec<draw::Curve>,
-    pitch: usize,
-    len: usize,
-}
-
-impl SurfaceInfo {
-    /// Create a new Surface Information.
-    pub fn new(size: Size, pitch: Option<usize>) -> SurfaceInfo {
-        draw::init();
-
-        let pitch = pitch.unwrap_or(size.0 as usize * 4);
-        let len = pitch * size.1 as usize;
-
-        SurfaceInfo {
-            size,
-            sizef: (size.0 as f32, size.1 as f32),
-            lines: vec![],
-            curves: vec![],
-            pitch,
-            len,
-        }
-    }
-
-    /// Clear the surface
-    fn clear(&self, pixbuf: *mut u8) {
-        unsafe { pixbuf.write_bytes(0, self.len) }
-    }
-
-    /// Draw a path a solid color (sRGBA).
-    fn draw<'a, T>(&mut self, pixbuf: *mut u8, color: [u8; 4], path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        let iter = path.into_iter();
-
-        draw::draw(
-            pixbuf,
-            self.size,
-            self.pitch,
-            iter,
-            color,
-            &mut self.lines,
-            &mut self.curves,
-            1.0,
-            1.0,
-        );
-    }
-
-    /// Draw a path a solid color (sRGBA).
-    fn path<'a, T>(&mut self, pixbuf: *mut u8, color: [u8; 4], path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        let iter = path.into_iter();
-
-        draw::draw(
-            pixbuf,
-            self.size,
-            self.pitch,
-            iter,
-            color,
-            &mut self.lines,
-            &mut self.curves,
-            self.sizef.0,
-            self.sizef.1,
-        );
-    }
-
-    /// Draw a graphic.
-    fn bitmap<'a, T>(&mut self, pixbuf: *mut u8, color: (u16, u16, &[[u8; 4]]), path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        let iter = path.into_iter();
-
-        draw::bitmap(
-            pixbuf,
-            self.size,
-            self.pitch,
-            iter,
-            color,
-            &mut self.lines,
-            &mut self.curves,
-            self.sizef.0,
-            self.sizef.1,
-        );
-    }
-
-    /// Draw text.
-    fn text(
-        &mut self,
-        pixbuf: *mut u8,
-        color: [u8; 4],
-        xysize: (f32, f32, f32),
-        font: &Font,
-        text: &str,
-    ) {
-        let mut x = xysize.0;
-        let mut y = xysize.1;
-        let size = xysize.2;
-
-        // Loop through the glyphs in the text, adding to the SVG.
-        for g in font.glyphs(text, (size, size)) {
-            // Check for newline
-            if g.2 {
-                x = xysize.0;
-                y += size;
-                continue;
-            }
-
-            // Draw the glyph
-            self.draw(pixbuf, color, g.0.draw(x, y).iter());
-
-            // Position next glyph
-            x += g.1;
-        }
-    }
-}
 
 /// An Image
 pub struct Image<'a> {
@@ -279,20 +98,6 @@ impl<'a> Image<'a> {
                 .fill(iter, footile::FillRule::NonZero)
                 .over(color);
         }
-
-/*        let iter = path.into_iter();
-
-        draw::draw(
-            pixbuf,
-            self.size,
-            self.pitch,
-            iter,
-            color,
-            &mut self.lines,
-            &mut self.curves,
-            self.sizef.0,
-            self.sizef.1,
-        );*/
     }
 
     /// Draw text.
@@ -303,9 +108,15 @@ impl<'a> Image<'a> {
         font: &'a Font,
         text: &str,
     ) {
+        let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
+
         let mut x = xysize.0;
         let mut y = xysize.1;
         let size = xysize.2;
+        let mut path: Vec<PathOp> = Vec::new();
+        let mut first = true;
+
+//        font.render(text, (size, size), x, y, &mut self.plotter);
 
         // Loop through the glyphs in the text, adding to the SVG.
         for g in font.glyphs(text, (size, size)) {
@@ -316,69 +127,29 @@ impl<'a> Image<'a> {
                 continue;
             }
 
-            // Draw the glyph
-            self.draw(color, g.0.draw(x, y).iter());
+            for i in g.0.draw(x, y).iter() {
+                match *i {
+                    PathOp::Move(x, y) => {
+                        if first {
+                            first = false;
+                        }
+                        path.push(PathOp::Move(x, y));
+                    },
+                    PathOp::Line(x, y) => path.push(PathOp::Line(x, y)),
+                    PathOp::Quad(x, y, z, w) => path.push(PathOp::Quad(x, y, z, w)),
+                    _ => panic!("oops"),
+                }
+            }
 
             // Position next glyph
             x += g.1;
         }
-    }
-}
 
-/// An sRGBA Surface.
-pub struct Surface {
-    pub info: SurfaceInfo,
-    pixels: Vec<u8>,
-}
-
-impl Surface {
-    /// Create a new HSV Surface.
-    pub fn new(size: Size, pitch: Option<usize>) -> Surface {
-        let info = SurfaceInfo::new(size, pitch);
-
-        println!("size {}", info.len);
-
-        Surface {
-            pixels: vec![0; info.len],
-            info,
+        if let Some(ref mut raster) = self.raster {
+            self.plotter.fill(path.iter(), footile::FillRule::NonZero).over_link(color, raster);
+        } else {
+            self.plotter.fill(path.iter(), footile::FillRule::NonZero).over(color);
         }
-    }
-
-    /// Clear the Surface to nothing.
-    #[inline(always)]
-    pub fn clear(&mut self) {
-        for i in &mut self.pixels {
-            *i = 0;
-        }
-    }
-
-    #[inline(always)]
-    pub fn len(&mut self) -> usize {
-        self.info.size.0 as usize * self.info.size.1 as usize
-    }
-
-    /// Draw a path a solid color (sRGBA).
-    #[inline(always)]
-    pub fn draw<'a, T>(&mut self, color: [u8; 4], path: T)
-    where
-        T: IntoIterator<Item = &'a PathOp>,
-    {
-        self.info.draw(self.pixels.as_mut_ptr(), color, path);
-    }
-
-    /// Draw text.
-    #[inline(always)]
-    pub fn text(&mut self, color: [u8; 4], xysize: (f32, f32, f32), font: &Font, text: &str) {
-        self.info
-            .text(self.pixels.as_mut_ptr(), color, xysize, font, text);
-    }
-
-    /// Blit to pixel buffer.
-    #[inline(always)]
-    pub unsafe fn blit(&self, pixel_buffer: *mut u8) {
-        use std::ptr::copy_nonoverlapping as copy;
-
-        copy(self.pixels.as_ptr(), pixel_buffer, self.info.len);
     }
 }
 
