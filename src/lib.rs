@@ -20,6 +20,8 @@
 extern crate fonterator;
 extern crate footile;
 
+use std::cell::RefCell;
+
 /// The default font.
 pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
 pub use fonterator::{Font, Path2D, PathOp, PathOp::*};
@@ -37,8 +39,8 @@ pub struct TexCoord(pub f32, pub f32);
 
 /// An Image
 pub struct Image<'a> {
-    plotter: footile::Plotter<footile::Rgba8>,
-    raster: Option<footile::LinkRaster<'a, footile::Rgba8>>,
+    plotter: footile::Plotter,
+    raster: footile::Raster<'a, footile::Rgba8>,
 }
 
 impl<'a> Image<'a> {
@@ -58,7 +60,7 @@ impl<'a> Image<'a> {
 
         Image {
             plotter: footile::Plotter::new(w, h),
-            raster: Some(footile::LinkRaster::new(w, h, pixels)),
+            raster: footile::Raster::with_pixels::<footile::Rgba8>(w, h, RefCell::new(pixels)),
         }
     }
 
@@ -68,17 +70,13 @@ impl<'a> Image<'a> {
 
         Image {
             plotter: footile::Plotter::new(w, h),
-            raster: None,
+            raster: footile::Raster::new(w, h),
         }
     }
 
     /// Clear the Image.
     pub fn clear(&mut self) {
-        if let Some(ref mut raster) = self.raster {
-            raster.clear();
-        } else if let Some(ref mut raster) = self.plotter.raster() {
-            raster.clear();
-        }
+        self.raster.clear();
     }
 
     /// Draw a path a solid color (sRGBA).
@@ -89,15 +87,7 @@ impl<'a> Image<'a> {
         let iter = path.into_iter();
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
-        if let Some(ref mut raster) = self.raster {
-            self.plotter
-                .fill(iter, footile::FillRule::NonZero)
-                .over_link(color, raster);
-        } else {
-            self.plotter
-                .fill(iter, footile::FillRule::NonZero)
-                .over(color);
-        }
+        self.raster.over(self.plotter.fill(iter, footile::FillRule::NonZero), color);
     }
 
     /// Draw text.
@@ -145,11 +135,7 @@ impl<'a> Image<'a> {
             x += g.1;
         }
 
-        if let Some(ref mut raster) = self.raster {
-            self.plotter.fill(path.iter(), footile::FillRule::NonZero).over_link(color, raster);
-        } else {
-            self.plotter.fill(path.iter(), footile::FillRule::NonZero).over(color);
-        }
+        self.raster.over(self.plotter.fill(path.iter(), footile::FillRule::NonZero), color);
     }
 }
 
