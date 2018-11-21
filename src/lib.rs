@@ -29,6 +29,8 @@ pub use fonterator::{Font, Path2D, PathOp, PathOp::*};
 // pub use afi::{PathOp};
 pub use PathOp::{Line, Move, Quad};
 
+use footile::PixFmt;
+
 /// Size of an image (width, height).
 #[derive(Copy, Clone)]
 pub struct Size(pub u16, pub u16);
@@ -38,31 +40,29 @@ pub struct Size(pub u16, pub u16);
 pub struct TexCoord(pub f32, pub f32);
 
 /// An Image
-pub struct Image<'a> {
+pub struct Image {
     plotter: footile::Plotter,
-    raster: footile::Raster<'a, footile::Rgba8>,
+    raster: footile::RasterB<footile::Rgba8>,
 }
 
-impl<'a> Image<'a> {
-    /// Create a new Image from a pointer.
-    pub fn from_ptr(size: Size, pixels: *mut u8) -> Image<'a> {
+impl Image {
+/*    /// Create a new Image from a pointer.
+    pub fn from_ptr(size: Size, pixels: *mut u8) -> Image {
         let len = size.0 as usize * size.1 as usize * 4;
         Image::from_slice(size, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
     }
 
     /// Create a new Image from a pixel slice.
-    pub fn from_slice(size: Size, pixels: &'a mut [u8]) -> Image<'a> {
+    pub fn from_slice(size: Size, pixels: &mut [u8]) -> Image {
         let (w, h) = (size.0 as u32, size.1 as u32);
 
-        let (_, pixels, _) = unsafe {
-            pixels.align_to_mut::<footile::Rgba8>()
-        };
+        let pixels = footile::Rgba8.as_slice_mut(pixels);
 
         Image {
             plotter: footile::Plotter::new(w, h),
-            raster: footile::Raster::with_pixels::<footile::Rgba8>(w, h, RefCell::new(pixels)),
+            raster: footile::RasterB::new::<footile::Rgba8>(w, h),
         }
-    }
+    }*/
 
     /// Create new Image.
     pub fn new(size: Size) -> Self {
@@ -70,24 +70,53 @@ impl<'a> Image<'a> {
 
         Image {
             plotter: footile::Plotter::new(w, h),
-            raster: footile::Raster::new(w, h),
+            raster: footile::RasterB::new(w, h),
         }
     }
 
     /// Clear the Image.
-    pub fn clear(&mut self) {
-        self.raster.clear();
+    pub fn clear_ptr(&mut self, pixels: *mut u8) {
+        let len = self.raster.width() as usize * self.raster.height() as usize * 4;
+        self.clear(unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+    }
+
+    /// Clear the Image.
+    pub fn clear(&mut self, pixels: &mut [u8]) {
+        self.raster.clear(footile::Rgba8::as_slice_mut(pixels));
     }
 
     /// Draw a path a solid color (sRGBA).
-    pub fn draw<'b, T>(&mut self, color: [u8; 4], path: T)
+    pub fn draw_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
+    where
+        T: IntoIterator<Item = &'b PathOp>,
+    {
+        let len = self.raster.width() as usize * self.raster.height() as usize * 4;
+        self.draw(color, path, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+    }
+
+    /// Draw a path a solid color (sRGBA).
+    pub fn draw<'b, T>(&mut self, color: [u8; 4], path: T, pixels: &mut [u8])
     where
         T: IntoIterator<Item = &'b PathOp>,
     {
         let iter = path.into_iter();
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
-        self.raster.over(self.plotter.fill(iter, footile::FillRule::NonZero), color);
+        self.raster.over(self.plotter.fill(iter, footile::FillRule::NonZero), color,
+            footile::Rgba8::as_slice_mut(pixels));
+    }
+
+    /// Draw text.
+    pub fn text_ptr(
+        &mut self,
+        color: [u8; 4],
+        xysize: (f32, f32, f32),
+        font: &Font,
+        text: &str,
+        pixels: *mut u8
+    ) {
+        let len = self.raster.width() as usize * self.raster.height() as usize * 4;
+        self.text(color, xysize, font, text, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
     }
 
     /// Draw text.
@@ -95,8 +124,9 @@ impl<'a> Image<'a> {
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
-        font: &'a Font,
+        font: &Font,
         text: &str,
+        pixels: &mut [u8]
     ) {
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
@@ -135,7 +165,8 @@ impl<'a> Image<'a> {
             x += g.1;
         }
 
-        self.raster.over(self.plotter.fill(path.iter(), footile::FillRule::NonZero), color);
+        self.raster.over(self.plotter.fill(path.iter(), footile::FillRule::NonZero), color,
+            footile::Rgba8::as_slice_mut(pixels));
     }
 }
 

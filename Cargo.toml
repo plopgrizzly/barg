@@ -11,7 +11,7 @@ fonterator = { path = "../fonterator" }
 # For Vector Math
 ami = "0.13"
 # Renderer
-footile = {path = "../footile"} # "0.1"
+footile = "0.2"
 arrayvec = { version = "0.4", default-features = false }
 ordered-float = "0.5"
 approx = { version = "0.3", default-features = false }
