@@ -44,7 +44,7 @@ pub struct Image {
 }
 
 impl Image {
-/*    /// Create a new Image from a pointer.
+    /*    /// Create a new Image from a pointer.
     pub fn from_ptr(size: Size, pixels: *mut u8) -> Image {
         let len = size.0 as usize * size.1 as usize * 4;
         Image::from_slice(size, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
@@ -89,7 +89,9 @@ impl Image {
         T: IntoIterator<Item = &'b PathOp>,
     {
         let len = self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.draw(color, path, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+        self.draw(color, path, unsafe {
+            std::slice::from_raw_parts_mut(pixels, len)
+        })
     }
 
     /// Draw a path a solid color (sRGBA).
@@ -100,8 +102,11 @@ impl Image {
         let iter = path.into_iter();
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
-        self.raster.over(self.plotter.fill(iter, footile::FillRule::NonZero), color,
-            footile::Rgba8::as_slice_mut(pixels));
+        self.raster.over(
+            self.plotter.fill(iter, footile::FillRule::NonZero),
+            color,
+            footile::Rgba8::as_slice_mut(pixels),
+        );
     }
 
     /// Draw text.
@@ -111,10 +116,12 @@ impl Image {
         xysize: (f32, f32, f32),
         font: &Font,
         text: &str,
-        pixels: *mut u8
+        pixels: *mut u8,
     ) {
         let len = self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.text(color, xysize, font, text, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+        self.text(color, xysize, font, text, unsafe {
+            std::slice::from_raw_parts_mut(pixels, len)
+        })
     }
 
     /// Draw text.
@@ -124,7 +131,7 @@ impl Image {
         xysize: (f32, f32, f32),
         font: &Font,
         text: &str,
-        pixels: &mut [u8]
+        pixels: &mut [u8],
     ) {
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
@@ -134,7 +141,7 @@ impl Image {
         let mut path: Vec<PathOp> = Vec::new();
         let mut first = true;
 
-//        font.render(text, (size, size), x, y, &mut self.plotter);
+        //        font.render(text, (size, size), x, y, &mut self.plotter);
 
         // Loop through the glyphs in the text, adding to the SVG.
         for g in font.glyphs(text, (size, size)) {
@@ -152,7 +159,7 @@ impl Image {
                             first = false;
                         }
                         path.push(PathOp::Move(x, y));
-                    },
+                    }
                     PathOp::Line(x, y) => path.push(PathOp::Line(x, y)),
                     PathOp::Quad(x, y, z, w) => path.push(PathOp::Quad(x, y, z, w)),
                     _ => panic!("oops"),
@@ -163,8 +170,11 @@ impl Image {
             x += g.1;
         }
 
-        self.raster.over(self.plotter.fill(path.iter(), footile::FillRule::NonZero), color,
-            footile::Rgba8::as_slice_mut(pixels));
+        self.raster.over(
+            self.plotter.fill(path.iter(), footile::FillRule::NonZero),
+            color,
+            footile::Rgba8::as_slice_mut(pixels),
+        );
     }
 }
 
