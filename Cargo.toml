@@ -1,20 +1,36 @@
+# Copyright Jeron Lau 2017 - 2018.
+# Dual-licensed under either the MIT License or the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
+
+# XXXX  X                    /5\——————/5\       XXXX      X           X
+# X   X X   XXX   XXXX      |   0    0   |     X      XXX   XXXX XXXX X X   X
+# X   X X  X   X  X   X  /"\|     <>     |/"\  X      X   X    X    X X X   X
+# XXXX  X  X   X  X   X  \  \\_  ====  _//  /  X   XX X   X   X    X  X  X X
+# X     X  X   X  XXXX    \_              _/   X    X X   X  X    X   X   X
+# X     X   XXX   X       / \            / \    XXXX  X   X XXXX XXXX X   X
+#                 X       \                /                            XX
+#                          --____________--
+
 [package]
 name = "barg"
-version = "0.1.0"
-authors = ["Jeron Lau <jeron.lau@plopgrizzly.com>"]
+version = "0.0.1"
+authors = [
+	"Jeron Lau <jeron.lau@plopgrizzly.com>",
+]
+license = "MIT / BSL-1.0"
+documentation = "https://docs.rs/barg"
+homepage = "https://gitlab.com/plopgrizzly/barg/"
+repository = "https://github.com/plopgrizzly/barg"
+readme = "README.md"
+description = "3D vector graphics renderer."
+keywords = ["graphics", "render", "vector", "3D", "render"]
+categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
-# For Color Translations & sRGBA VFrame.
-afi = { path = "../afi" }
 # For Text Rendering
-fonterator = { path = "../fonterator" }
-# For Vector Math
-ami = "0.13"
+fonterator = "0.2.0-pre0"
 # Renderer
 footile = "0.2"
-arrayvec = { version = "0.4", default-features = false }
-ordered-float = "0.5"
-approx = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 png = "0.12"

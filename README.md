@@ -1,5 +1,5 @@
 # Barg
-The accurate, low resource renderer.
+3D vector graphics renderer.
 
 ## Motivation
 API's like Vulkan, Metal and OpenGL have trouble with certain things like anti-aliasing (which gets "solved" with Multisampling), and how to make a perfect sphere (It's not really possible).

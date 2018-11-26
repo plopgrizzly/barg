@@ -20,8 +20,6 @@
 extern crate fonterator;
 extern crate footile;
 
-use std::cell::RefCell;
-
 /// The default font.
 pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
 pub use fonterator::{Font, Path2D, PathOp, PathOp::*};
