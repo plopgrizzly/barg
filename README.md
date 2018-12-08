@@ -18,9 +18,22 @@ Rendering is done face-by-face.  So a cube will be 6 draw calls (1 for each face
 
 Alpha blending will be done backwards.  No matter what faces that are closest to the camera will always be drawn first.  The alpha value will be stored on the surface we're rendering to.  If it's 255 then pixels will be culled.  If it's less faces will be blended behind the face currently in the render buffer.
 
-## License
-Barg is Dual-Licensed under the MIT License and the Boost Software License, Version 1.0.
+## Features
+* Render 2D graphics
+* Render text
 
-## Changelog
-### 0.0.1
-Initial release.
+## TODO
+* Render 3D graphics
+* Render GUI elements / widgets
+
+## Links
+* [Website](https://free.plopgrizzly.com/barg)
+* [Cargo](https://crates.io/crates/barg)
+* [Documentation](https://docs.rs/barg)
+* [Change Log](https://free.plopgrizzly.com/barg/changelog)
+* [Contributing](https://plopgrizzly.com/contributing)
+* [Code of Conduct](https://free.plopgrizzly.com/barg/codeofconduct)
+
+---
+
+[![Plop Grizzly](https://plopgrizzly.com/images/logo-bar.png)](https://plopgrizzly.com)

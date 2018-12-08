@@ -22,7 +22,7 @@ extern crate footile;
 
 /// The default font.
 pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
-pub use fonterator::{Font, Path2D, PathOp, PathOp::*};
+pub use fonterator::{Font, PathOp, PathOp::*};
 
 // pub use afi::{PathOp};
 pub use PathOp::{Line, Move, Quad};
@@ -135,43 +135,15 @@ impl Image {
     ) {
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
-        let mut x = xysize.0;
-        let mut y = xysize.1;
-        let size = xysize.2;
-        let mut path: Vec<PathOp> = Vec::new();
-        let mut first = true;
-
-        //        font.render(text, (size, size), x, y, &mut self.plotter);
-
-        // Loop through the glyphs in the text, adding to the SVG.
-        for g in font.glyphs(text, (size, size)) {
-            // Check for newline
-            if g.2 {
-                x = xysize.0;
-                y += size;
-                continue;
-            }
-
-            for i in g.0.draw(x, y).iter() {
-                match *i {
-                    PathOp::Move(x, y) => {
-                        if first {
-                            first = false;
-                        }
-                        path.push(PathOp::Move(x, y));
-                    }
-                    PathOp::Line(x, y) => path.push(PathOp::Line(x, y)),
-                    PathOp::Quad(x, y, z, w) => path.push(PathOp::Quad(x, y, z, w)),
-                    _ => panic!("oops"),
-                }
-            }
-
-            // Position next glyph
-            x += g.1;
-        }
+        // Render the text
+        let path = font.render(
+            text,                 /*text*/
+            (xysize.0, xysize.1), /*position*/
+            (xysize.2, xysize.2), /*size*/
+        );
 
         self.raster.over(
-            self.plotter.fill(path.iter(), footile::FillRule::NonZero),
+            self.plotter.fill(path, footile::FillRule::NonZero),
             color,
             footile::Rgba8::as_slice_mut(pixels),
         );
