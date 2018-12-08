@@ -19,7 +19,7 @@ authors = [
 ]
 license = "MIT / BSL-1.0"
 documentation = "https://docs.rs/barg"
-homepage = "https://gitlab.com/plopgrizzly/barg/"
+homepage = "https://free.plopgrizzly.com/barg"
 repository = "https://github.com/plopgrizzly/barg"
 readme = "README.md"
 description = "3D vector graphics renderer."
