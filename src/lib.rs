@@ -20,10 +20,11 @@
 extern crate fonterator;
 extern crate footile;
 
-pub use fonterator::{FontChain, PathOp, PathOp::*};
-
-// pub use afi::{PathOp};
-pub use PathOp::{Line, Move, Quad};
+pub use fonterator::{
+    FontChain, PathOp,
+    PathOp::*,
+    PathOp::{Line, Move, Quad},
+};
 
 use footile::PixFmt;
 

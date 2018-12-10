@@ -17,6 +17,7 @@ version = "0.0.3"
 authors = [
 	"Jeron Lau <jeron.lau@plopgrizzly.com>",
 ]
+edition = "2018"
 license = "MIT / BSL-1.0"
 documentation = "https://docs.rs/barg"
 homepage = "https://free.plopgrizzly.com/barg"
