@@ -13,7 +13,7 @@
 
 [package]
 name = "barg"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
 	"Jeron Lau <jeron.lau@plopgrizzly.com>",
 ]
@@ -28,7 +28,7 @@ categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
 # For Text Rendering
-fonterator = "0.2"
+fonterator = "0.3"
 # Renderer
 footile = "0.2"
 

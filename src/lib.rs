@@ -20,9 +20,7 @@
 extern crate fonterator;
 extern crate footile;
 
-/// The default font.
-pub const FONT: &'static [u8] = include_bytes!("../font/LiberationMono-Regular.ttf");
-pub use fonterator::{Font, PathOp, PathOp::*};
+pub use fonterator::{FontChain, PathOp, PathOp::*};
 
 // pub use afi::{PathOp};
 pub use PathOp::{Line, Move, Quad};
@@ -44,24 +42,6 @@ pub struct Image {
 }
 
 impl Image {
-    /*    /// Create a new Image from a pointer.
-    pub fn from_ptr(size: Size, pixels: *mut u8) -> Image {
-        let len = size.0 as usize * size.1 as usize * 4;
-        Image::from_slice(size, unsafe { std::slice::from_raw_parts_mut(pixels, len) })
-    }
-
-    /// Create a new Image from a pixel slice.
-    pub fn from_slice(size: Size, pixels: &mut [u8]) -> Image {
-        let (w, h) = (size.0 as u32, size.1 as u32);
-
-        let pixels = footile::Rgba8.as_slice_mut(pixels);
-
-        Image {
-            plotter: footile::Plotter::new(w, h),
-            raster: footile::RasterB::new::<footile::Rgba8>(w, h),
-        }
-    }*/
-
     /// Create new Image.
     pub fn new(size: Size) -> Self {
         let (w, h) = (size.0 as u32, size.1 as u32);
@@ -114,7 +94,7 @@ impl Image {
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
-        font: &Font,
+        font: &FontChain,
         text: &str,
         pixels: *mut u8,
     ) {
@@ -129,7 +109,7 @@ impl Image {
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
-        font: &Font,
+        font: &FontChain,
         text: &str,
         pixels: &mut [u8],
     ) {
