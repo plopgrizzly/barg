@@ -20,6 +20,10 @@
 extern crate fonterator;
 extern crate footile;
 
+mod gui;
+
+pub use crate::gui::Gui;
+
 pub use fonterator::{
     FontChain, PathOp,
     PathOp::*,
@@ -53,6 +57,11 @@ impl Image {
         }
     }
 
+    /// Get the size of the image.
+    pub fn size(&self) -> Size {
+        Size(self.raster.width() as u16, self.raster.height() as u16)
+    }
+
     /// Clear the Image.
     pub fn clear_ptr(&mut self, pixels: *mut u8) {
         let len = self.raster.width() as usize * self.raster.height() as usize * 4;
@@ -65,18 +74,29 @@ impl Image {
     }
 
     /// Draw a path a solid color (sRGBA).
-    pub fn draw_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
+    pub fn fill_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
     where
         T: IntoIterator<Item = &'b PathOp>,
     {
         let len = self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.draw(color, path, unsafe {
+        self.fill(color, path, unsafe {
             std::slice::from_raw_parts_mut(pixels, len)
         })
     }
 
     /// Draw a path a solid color (sRGBA).
-    pub fn draw<'b, T>(&mut self, color: [u8; 4], path: T, pixels: &mut [u8])
+    pub fn stroke_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
+    where
+        T: IntoIterator<Item = &'b PathOp>,
+    {
+        let len = self.raster.width() as usize * self.raster.height() as usize * 4;
+        self.stroke(color, path, unsafe {
+            std::slice::from_raw_parts_mut(pixels, len)
+        })
+    }
+
+    /// Draw a path a solid color (sRGBA).
+    pub fn fill<'b, T>(&mut self, color: [u8; 4], path: T, pixels: &mut [u8])
     where
         T: IntoIterator<Item = &'b PathOp>,
     {
@@ -85,6 +105,21 @@ impl Image {
 
         self.raster.over(
             self.plotter.fill(iter, footile::FillRule::NonZero),
+            color,
+            footile::Rgba8::as_slice_mut(pixels),
+        );
+    }
+
+    /// Draw a path a solid color (sRGBA).
+    pub fn stroke<'b, T>(&mut self, color: [u8; 4], path: T, pixels: &mut [u8])
+    where
+        T: IntoIterator<Item = &'b PathOp>,
+    {
+        let iter = path.into_iter();
+        let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
+
+        self.raster.over(
+            self.plotter.stroke(iter),
             color,
             footile::Rgba8::as_slice_mut(pixels),
         );
@@ -128,15 +163,6 @@ impl Image {
             color,
             footile::Rgba8::as_slice_mut(pixels),
         );
-    }
-}
-
-/// A Graphical User Interface.
-pub struct Gui {}
-
-impl Gui {
-    pub fn new() -> Gui {
-        Gui {}
     }
 }
 

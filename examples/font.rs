@@ -1,8 +1,4 @@
-extern crate barg;
-extern crate fonterator;
-extern crate png;
-
-use barg::{Font, Size, Surface, FONT};
+use barg::{FontChain, Size, Image};
 
 use png::HasParameters;
 use std::fs::File;
@@ -20,22 +16,21 @@ pub fn write_png(width: u32, height: u32, pixels: &[u8], filename: &str) -> io::
 }
 
 fn main() {
-    // This only succeeds if collection consists of one font
-    let font = Font::new(FONT).expect("Failed to load font!");
+    let font = FontChain::default();
 
     // Initialize variables need to write to PNG
     let w = 256 * 10;
     let h = 256;
     let mut buffer = vec![0; w * h * 4];
-    let mut surface = Surface::new(Size(w as u16, h as u16));
+    let mut surface = Image::new(Size(w as u16, h as u16));
 
     surface.text(
         [0, 0, 0, 255],
         (0.0, 0.0, 256.0),
         &font,
         "Splat And… ‽é¿?üæ",
+        &mut buffer,
     );
-    surface.srgba(&mut buffer);
 
     // Save the image to a PNG file.
     write_png(w as u32, h as u32, buffer.as_slice(), "image_example.png").unwrap();

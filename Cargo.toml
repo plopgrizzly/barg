@@ -1,4 +1,4 @@
-# Copyright Jeron Lau 2017 - 2018.
+# Copyright Jeron Lau 2017 - 2019.
 # Dual-licensed under either the MIT License or the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
@@ -29,9 +29,9 @@ categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
 # For Text Rendering
-fonterator = "0.3"
+fonterator = { path = "../fonterator" } # "0.3"
 # Renderer
-footile = "0.2"
+footile = { path = "../footile" } # "0.2"
 
 [dev-dependencies]
-png = "0.12"
+png = "0.13"
