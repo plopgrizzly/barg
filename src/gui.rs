@@ -144,13 +144,13 @@ impl<'a> Gui<'a> {
                 );
             }
 
-            image.text(
+            x+=image.text(
                 fg,
                 (x + (self.size as f32 * 0.125), y + (self.size as f32 * 0.125), self.size as f32 * 0.75),
                 &self.font,
                 t,
                 buffer,
-            );
+            ).0;
         }
     }
 
@@ -193,13 +193,14 @@ impl<'a> Gui<'a> {
                 );
             }
 
-            image.text(
+            // TODO: Increase X starting position for each column
+            x+=image.text(
                 fg,
                 (x + (self.size as f32 * 0.125), y + (self.size as f32 * 1.125), self.size as f32 * 0.75),
                 &self.font,
                 t,
                 buffer,
-            );
+            ).0;
         }
     }
 }

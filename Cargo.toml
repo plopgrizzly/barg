@@ -14,9 +14,7 @@
 [package]
 name = "barg"
 version = "0.0.3"
-authors = [
-	"Jeron Lau <jeron.lau@plopgrizzly.com>",
-]
+authors = ["Jeron Aldaron Lau <jeronaldaron@gmail.com>"]
 edition = "2018"
 license = "MIT / BSL-1.0"
 documentation = "https://docs.rs/barg"

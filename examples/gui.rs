@@ -32,7 +32,8 @@ fn main() {
         &|row, color| {
             *color = [48, 48, 64, 255, 1];
             &[
-                (&[], "Hello, worldy!")
+                (&[], "Hello, worldy!"),
+                (&[], "Test"),
             ]
         },
     );
@@ -41,10 +42,17 @@ fn main() {
         &mut surface,
         &mut buffer,
         &|row, color| {
-            *color = [0x80, 0xFF, 0x80, 255, 1];
-            &[
-                (&[], "Hello, worldy!")
-            ]
+            *color = [0x80, 0xFF, 0x80, 255, 1];            
+            match row {
+                0 => &[
+                    (&[], "Hello, worldy!"),
+                ],
+                1 => &[
+                    (&[], "Yo!"),
+                    (&[], "Sup‽"),
+                ],
+                _ => &[],
+            }
         },
     );
 

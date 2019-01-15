@@ -133,7 +133,7 @@ impl Image {
         font: &FontChain,
         text: &str,
         pixels: *mut u8,
-    ) {
+    ) -> (f32, f32) {
         let len = self.raster.width() as usize * self.raster.height() as usize * 4;
         self.text(color, xysize, font, text, unsafe {
             std::slice::from_raw_parts_mut(pixels, len)
@@ -148,21 +148,25 @@ impl Image {
         font: &FontChain,
         text: &str,
         pixels: &mut [u8],
-    ) {
+    ) -> (f32, f32) {
         let color = footile::Rgba8::new(color[0], color[1], color[2], color[3]);
 
         // Render the text
-        let path = font.render(
+        let mut path = font.render(
             text,                 /*text*/
             (xysize.0, xysize.1), /*position*/
             (xysize.2, xysize.2), /*size*/
         );
 
         self.raster.over(
-            self.plotter.fill(path, footile::FillRule::NonZero),
+            self.plotter.fill(&mut path, footile::FillRule::NonZero),
             color,
             footile::Rgba8::as_slice_mut(pixels),
         );
+
+        let (cx, cy) = path.xy();
+
+        (cx, cy)
     }
 }
 
