@@ -1,7 +1,6 @@
-use crate::FontChain;
+use crate::FontGroup;
 use crate::Image;
 use fonterator::PathOp::{self, *};
-
 
 // Import entity component system for use.
 // mod ecs;
@@ -76,12 +75,12 @@ pub struct Gui<'a> {
     // Fast user input row height cache.  Start y and then start index.
     ydif_id: Vec<(u32, u32)>,
     //
-    font: FontChain<'a>,
+    font: FontGroup<'a>,
 }
 
 impl<'a> Gui<'a> {
     /// Create a new GUI.  `color` is the background color of the first row.
-    pub fn new(font: FontChain<'a>) -> Gui<'a> {
+    pub fn new(font: FontGroup<'a>) -> Gui<'a> {
         Gui {
             // Initially at top of page.
             scroll: 0,
@@ -112,8 +111,7 @@ impl<'a> Gui<'a> {
         image: &mut Image,
         buffer: &mut [u8],
         generator: &Fn(usize, &mut [u8; 5]) -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
-    )
-    {
+    ) {
         let crate::Size(w, h) = image.size();
         let mut x = 0.0;
         let y = 0.0; // Not mutable because we only call generator once.
@@ -129,14 +127,16 @@ impl<'a> Gui<'a> {
             Move(0.0, 0 as f32),
             Line(w as f32, 0 as f32),
             Line(w as f32, (self.size + 1) as f32),
-            Line(0.0, (self.size + 1) as f32)
+            Line(0.0, (self.size + 1) as f32),
         ];
         image.fill(bg /*color*/, &shape /*path*/, buffer /**/);
         draw_window_border(image, buffer, (self.size) as f32, color[4]);
 
         // Render Slice
-        for (g, t) in iter { // Iterate over columns in row.
-            for p in g.iter() { // Iterate over paths in graphic.
+        for (g, t) in iter {
+            // Iterate over columns in row.
+            for p in g.iter() {
+                // Iterate over paths in graphic.
                 image.fill(
                     p.0, // color
                     p.1, // path
@@ -144,13 +144,19 @@ impl<'a> Gui<'a> {
                 );
             }
 
-            x+=image.text(
-                fg,
-                (x + (self.size as f32 * 0.125), y + (self.size as f32 * 0.125), self.size as f32 * 0.75),
-                &self.font,
-                t,
-                buffer,
-            ).0;
+            x += image
+                .text(
+                    fg,
+                    (
+                        x + (self.size as f32 * 0.125),
+                        y + (self.size as f32 * 0.125),
+                        self.size as f32 * 0.75,
+                    ),
+                    &self.font,
+                    t,
+                    buffer,
+                )
+                .0;
         }
     }
 
@@ -161,8 +167,7 @@ impl<'a> Gui<'a> {
         image: &mut Image,
         buffer: &mut [u8],
         generator: &Fn(usize, &mut [u8; 5]) -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
-    )
-    {
+    ) {
         let crate::Size(w, h) = image.size();
         let mut x = 0.0;
         let y = 0.0; // Not mutable because we only call generator once.
@@ -178,14 +183,16 @@ impl<'a> Gui<'a> {
             Move(0.0, (self.size) as f32),
             Line(w as f32, (self.size) as f32),
             Line(w as f32, (2 * self.size) as f32),
-            Line(0.0, (2 * self.size) as f32)
+            Line(0.0, (2 * self.size) as f32),
         ];
         image.fill(bg /*color*/, &shape /*path*/, buffer /**/);
         draw_window_border(image, buffer, (self.size * 2 - 1) as f32, color[4]);
 
         // Render Slice
-        for (g, t) in iter { // Iterate over columns in row.
-            for p in g.iter() { // Iterate over paths in graphic.
+        for (g, t) in iter {
+            // Iterate over columns in row.
+            for p in g.iter() {
+                // Iterate over paths in graphic.
                 image.fill(
                     p.0, // color
                     p.1, // path
@@ -194,13 +201,19 @@ impl<'a> Gui<'a> {
             }
 
             // TODO: Increase X starting position for each column
-            x+=image.text(
-                fg,
-                (x + (self.size as f32 * 0.125), y + (self.size as f32 * 1.125), self.size as f32 * 0.75),
-                &self.font,
-                t,
-                buffer,
-            ).0;
+            x += image
+                .text(
+                    fg,
+                    (
+                        x + (self.size as f32 * 0.125),
+                        y + (self.size as f32 * 1.125),
+                        self.size as f32 * 0.75,
+                    ),
+                    &self.font,
+                    t,
+                    buffer,
+                )
+                .0;
         }
     }
 }
@@ -223,7 +236,8 @@ fn draw_window_border(image: &mut Image, buffer: &mut [u8], y: f32, separator: u
     let crate::Size(w, h) = image.size();
 
     if separator == 0 {
-        image.stroke([0, 0, 0, 255] /*color*/,
+        image.stroke(
+            [0, 0, 0, 255], /*color*/
             &[
                 PenWidth(2.0),
                 Move(0.0, 0.0),
@@ -231,9 +245,12 @@ fn draw_window_border(image: &mut Image, buffer: &mut [u8], y: f32, separator: u
                 Line(w as f32, h as f32),
                 Line(0.0, h as f32),
                 Line(0.0, 0.0),
-            ] /*path*/, buffer /**/);
+            ], /*path*/
+            buffer,         /**/
+        );
     } else {
-        image.stroke([0, 0, 0, 255] /*color*/,
+        image.stroke(
+            [0, 0, 0, 255], /*color*/
             &[
                 PenWidth(2.0),
                 Move(0.0, 0.0),
@@ -246,6 +263,8 @@ fn draw_window_border(image: &mut Image, buffer: &mut [u8], y: f32, separator: u
                 Move(0.0, y),
                 Line(w as f32, y),
                 Close(),
-            ] /*path*/, buffer /**/);
+            ], /*path*/
+            buffer,         /**/
+        );
     }
 }

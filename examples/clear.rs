@@ -1,4 +1,4 @@
-use barg::{Size, Image};
+use barg::{Image, Size};
 
 use png::HasParameters;
 use std::fs::File;

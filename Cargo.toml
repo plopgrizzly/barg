@@ -2,15 +2,6 @@
 # Dual-licensed under either the MIT License or the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 
-# XXXX  X                    /5\——————/5\       XXXX      X           X
-# X   X X   XXX   XXXX      |   0    0   |     X      XXX   XXXX XXXX X X   X
-# X   X X  X   X  X   X  /"\|     <>     |/"\  X      X   X    X    X X X   X
-# XXXX  X  X   X  X   X  \  \\_  ====  _//  /  X   XX X   X   X    X  X  X X
-# X     X  X   X  XXXX    \_              _/   X    X X   X  X    X   X   X
-# X     X   XXX   X       / \            / \    XXXX  X   X XXXX XXXX X   X
-#                 X       \                /                            XX
-#                          --____________--
-
 [package]
 name = "barg"
 version = "0.0.3"
@@ -26,10 +17,8 @@ keywords = ["graphics", "render", "vector", "3D", "render"]
 categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
-# For Text Rendering
-fonterator = { path = "../fonterator" } # "0.3"
-# Renderer
-footile = { path = "../footile" } # "0.2"
+# For Rendering including Text
+fonterator = "0.4"
 
 [dev-dependencies]
-png = "0.13"
+png = "0.14"

@@ -1,4 +1,4 @@
-use barg::{FontChain, Size, Image, Gui};
+use barg::{FontGroup, Gui, Image, Size};
 
 use png::HasParameters;
 use std::fs::File;
@@ -17,7 +17,7 @@ pub fn write_png(width: u32, height: u32, pixels: &[u8], filename: &str) -> io::
 
 fn main() {
     // Load GUI resources.
-    let font = FontChain::default();
+    let font = FontGroup::default();
     let mut gui = Gui::new(font);
 
     // Initialize variables need to write to PNG
@@ -26,35 +26,19 @@ fn main() {
     let mut buffer = vec![0; w * h * 4];
     let mut surface = Image::new(Size(w as u16, h as u16));
 
-    gui.head(
-        &mut surface,
-        &mut buffer,
-        &|row, color| {
-            *color = [48, 48, 64, 255, 1];
-            &[
-                (&[], "Hello, worldy!"),
-                (&[], "Test"),
-            ]
-        },
-    );
+    gui.head(&mut surface, &mut buffer, &|row, color| {
+        *color = [48, 48, 64, 255, 1];
+        &[(&[], "Hello, worldy!"), (&[], "Test")]
+    });
 
-    gui.page(
-        &mut surface,
-        &mut buffer,
-        &|row, color| {
-            *color = [0x80, 0xFF, 0x80, 255, 1];            
-            match row {
-                0 => &[
-                    (&[], "Hello, worldy!"),
-                ],
-                1 => &[
-                    (&[], "Yo!"),
-                    (&[], "Sup‽"),
-                ],
-                _ => &[],
-            }
-        },
-    );
+    gui.page(&mut surface, &mut buffer, &|row, color| {
+        *color = [0x80, 0xFF, 0x80, 255, 1];
+        match row {
+            0 => &[(&[], "Hello, worldy!")],
+            1 => &[(&[], "Yo!"), (&[], "Sup‽")],
+            _ => &[],
+        }
+    });
 
     // Save the image to a PNG file.
     write_png(w as u32, h as u32, buffer.as_slice(), "image_example.png").unwrap();

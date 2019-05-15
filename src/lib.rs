@@ -18,14 +18,15 @@
 //! Alpha blending will be done backwards.  No matter what faces that are closest to the camera will always be drawn first.  The alpha value will be stored on the surface we're rendering to.  If it's 255 then pixels will be culled.  If it's less faces will be blended behind the face currently in the render buffer.
 
 extern crate fonterator;
-extern crate footile;
+
+use fonterator::footile;
 
 mod gui;
 
 pub use crate::gui::Gui;
 
 pub use fonterator::{
-    FontChain, PathOp,
+    FontGroup, PathOp,
     PathOp::*,
     PathOp::{Line, Move, Quad},
 };
@@ -130,7 +131,7 @@ impl Image {
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
-        font: &FontChain,
+        font: &FontGroup,
         text: &str,
         pixels: *mut u8,
     ) -> (f32, f32) {
@@ -145,7 +146,7 @@ impl Image {
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
-        font: &FontChain,
+        font: &FontGroup,
         text: &str,
         pixels: &mut [u8],
     ) -> (f32, f32) {

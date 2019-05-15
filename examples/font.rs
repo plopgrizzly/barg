@@ -1,4 +1,4 @@
-use barg::{FontChain, Size, Image};
+use barg::{FontGroup, Image, Size};
 
 use png::HasParameters;
 use std::fs::File;
@@ -16,7 +16,7 @@ pub fn write_png(width: u32, height: u32, pixels: &[u8], filename: &str) -> io::
 }
 
 fn main() {
-    let font = FontChain::default();
+    let font = FontGroup::default();
 
     // Initialize variables need to write to PNG
     let w = 256 * 10;
