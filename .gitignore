@@ -1,4 +1,4 @@
-svg/*.png
+rvg/*.png
 image_example.png
 /target
 **/*.rs.bk
