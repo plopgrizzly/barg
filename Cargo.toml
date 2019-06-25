@@ -19,6 +19,8 @@ categories = ["gui", "multimedia", "rendering::graphics-api"]
 [dependencies]
 # For Rendering including Text
 fonterator = "0.4"
+# For loading RVG files.
+rvg = { path = "../rvg" }
 
 [dev-dependencies]
 png = "0.14"
