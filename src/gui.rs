@@ -110,7 +110,11 @@ impl<'a> Gui<'a> {
         &mut self,
         image: &mut Image,
         buffer: &mut [u8],
-        generator: &Fn(usize, &mut [u8; 5]) -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
+        generator: &Fn(
+            usize,
+            &mut [u8; 5],
+        )
+            -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
     ) {
         let crate::Size(w, h) = image.size();
         let mut x = 0.0;
@@ -166,7 +170,11 @@ impl<'a> Gui<'a> {
         &mut self,
         image: &mut Image,
         buffer: &mut [u8],
-        generator: &Fn(usize, &mut [u8; 5]) -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
+        generator: &Fn(
+            usize,
+            &mut [u8; 5],
+        )
+            -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
     ) {
         let crate::Size(w, h) = image.size();
         let mut x = 0.0;
@@ -232,7 +240,12 @@ fn fgcolor_from_bg(bg: [u8; 4]) -> [u8; 4] {
 }
 
 // Draw the window border, and optional separator.
-fn draw_window_border(image: &mut Image, buffer: &mut [u8], y: f32, separator: u8) {
+fn draw_window_border(
+    image: &mut Image,
+    buffer: &mut [u8],
+    y: f32,
+    separator: u8,
+) {
     let crate::Size(w, h) = image.size();
 
     if separator == 0 {

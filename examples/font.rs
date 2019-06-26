@@ -5,7 +5,12 @@ use std::fs::File;
 use std::io;
 
 /// Write the raster to a PNG (portable network graphics) file.
-pub fn write_png(width: u32, height: u32, pixels: &[u8], filename: &str) -> io::Result<()> {
+pub fn write_png(
+    width: u32,
+    height: u32,
+    pixels: &[u8],
+    filename: &str,
+) -> io::Result<()> {
     let fl = File::create(filename)?;
     let ref mut bw = io::BufWriter::new(fl);
     let mut enc = png::Encoder::new(bw, width, height);
@@ -33,5 +38,6 @@ fn main() {
     );
 
     // Save the image to a PNG file.
-    write_png(w as u32, h as u32, buffer.as_slice(), "image_example.png").unwrap();
+    write_png(w as u32, h as u32, buffer.as_slice(), "image_example.png")
+        .unwrap();
 }

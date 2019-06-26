@@ -1,25 +1,31 @@
-# Copyright Jeron Lau 2017 - 2019.
-# Dual-licensed under either the MIT License or the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
+# Barg
+#
+# Copyright © 2017-2019 Jeron Aldaron Lau.
+# Dual-licensed under either the MIT License or the Boost Software License,
+# Version 1.0.  (See accompanying file LICENSE_BSL.txt or copy at
+# https://www.boost.org/LICENSE_1_0.txt and accompanying file LICENSE_MIT.txt or
+# copy at https://opensource.org/licenses/MIT)
 
 [package]
 name = "barg"
 version = "0.0.3"
-authors = ["Jeron Aldaron Lau <jeronaldaron@gmail.com>"]
+authors = ["Jeron Aldaron Lau <jeronlau@plopgrizzly.com>"]
 edition = "2018"
 license = "MIT / BSL-1.0"
 documentation = "https://docs.rs/barg"
-homepage = "https://free.plopgrizzly.com/barg"
+homepage = "https://code.plopgrizzly.com/barg"
 repository = "https://github.com/plopgrizzly/barg"
 readme = "README.md"
-description = "3D vector graphics renderer."
+description = "A GUI toolkit & 3D graphics renderer."
 keywords = ["graphics", "render", "vector", "3D", "render"]
 categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
-# For Rendering including Text
+# For Window
+window = { path = "../window" }
+# For Rendering Including Text
 fonterator = "0.4"
-# For loading RVG files.
+# For Loading RVG Files.
 rvg = { path = "../rvg" }
 
 [dev-dependencies]
