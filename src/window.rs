@@ -1,3 +1,5 @@
+pub use window::ShaderBuilder;
+
 /// A Window.
 pub struct Window {
     window: Box<window::Window>,
