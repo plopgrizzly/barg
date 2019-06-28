@@ -1,4 +1,5 @@
 pub use window::ShaderBuilder;
+pub use window::Shader;
 
 /// A Window.
 pub struct Window {
@@ -23,5 +24,10 @@ impl Window {
     /// Set the background color of the window.
     pub fn background(&mut self, r: f32, g: f32, b: f32) {
         self.window.background(r, g, b);
+    }
+
+    /// Build a shader.
+    pub fn shader_new(&mut self, shader_builder: ShaderBuilder) -> Shader {
+        self.window.shader_new(shader_builder)
     }
 }
