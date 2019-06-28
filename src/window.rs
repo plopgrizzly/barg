@@ -1,5 +1,6 @@
 pub use window::ShaderBuilder;
 pub use window::Shader;
+pub use window::Shape;
 
 /// A Window.
 pub struct Window {
@@ -29,5 +30,10 @@ impl Window {
     /// Build a shader.
     pub fn shader_new(&mut self, shader_builder: ShaderBuilder) -> Shader {
         self.window.shader_new(shader_builder)
+    }
+
+    /// Build a shape.
+    pub fn shape_new(&mut self, vertices: &[f32], indices: &[u16]) -> Shape {
+        self.window.shape_new(vertices, indices)
     }
 }

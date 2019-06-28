@@ -13,7 +13,7 @@ mod gui;
 mod window;
 
 pub use crate::gui::Gui;
-pub use crate::window::{Window, ShaderBuilder, Shader};
+pub use crate::window::*;
 
 pub use fonterator::{
     FontGroup, PathOp,
