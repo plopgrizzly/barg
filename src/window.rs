@@ -1,6 +1,7 @@
 pub use window::ShaderBuilder;
 pub use window::Shader;
 pub use window::Shape;
+pub use window::VertexList;
 
 /// A Window.
 pub struct Window {
@@ -32,8 +33,13 @@ impl Window {
         self.window.shader_new(shader_builder)
     }
 
+    /// Create a new vertex list.
+    pub fn vertex_list_new(&mut self, vertices: &[f32], gradient: Option<&[f32]>, graphic_coords: Vec<&[f32]>) -> VertexList {
+        self.window.vertex_list_new(vertices, gradient, graphic_coords)
+    }
+
     /// Build a shape.
-    pub fn shape_new(&mut self, vertices: &[f32], indices: &[u16]) -> Shape {
-        self.window.shape_new(vertices, indices)
+    pub fn shape_new(&mut self, indices: &[u16]) -> Shape {
+        self.window.shape_new(indices)
     }
 }
