@@ -34,8 +34,8 @@ impl Window {
     }
 
     /// Create a new vertex list.
-    pub fn vertex_list_new(&mut self, vertices: &[f32], gradient: Option<&[f32]>, graphic_coords: Vec<&[f32]>) -> VertexList {
-        self.window.vertex_list_new(vertices, gradient, graphic_coords)
+    pub fn vertex_list_new(&mut self, vertices: &[f32], dim: u8, gradient: u8, graphic_coords: u8) -> VertexList {
+        self.window.vertex_list_new(vertices, dim, gradient, graphic_coords)
     }
 
     /// Build a shape.
