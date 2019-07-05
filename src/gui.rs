@@ -2,6 +2,12 @@ use crate::FontGroup;
 use crate::Image;
 use fonterator::PathOp::{self, *};
 
+type Generator<'b> = Fn(
+            usize,
+            &mut [u8; 5],
+        )
+            -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)];
+
 // Import entity component system for use.
 // mod ecs;
 // use self::ecs::*;
@@ -69,10 +75,12 @@ pub struct Gui<'a> {
     //    c_swipe: Storage<components::Swipe, Id>,
 
     // Page scroll amount
+    #[allow(unused)] // TODO
     scroll: u32,
     // GUI Size.
     size: u32,
     // Fast user input row height cache.  Start y and then start index.
+    #[allow(unused)] // TODO
     ydif_id: Vec<(u32, u32)>,
     //
     font: FontGroup<'a>,
@@ -110,16 +118,13 @@ impl<'a> Gui<'a> {
         &mut self,
         image: &mut Image,
         buffer: &mut [u8],
-        generator: &Fn(
-            usize,
-            &mut [u8; 5],
-        )
-            -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
+        generator: &Generator<'b>,
     ) {
-        let crate::Size(w, h) = image.size();
+        let crate::Size(w, _h) = image.size();
         let mut x = 0.0;
         let y = 0.0; // Not mutable because we only call generator once.
         let mut color = [0; 5];
+        let w = f32::from(w);
 
         // Render From Generator.
         let iter = generator(0, &mut color);
@@ -128,9 +133,9 @@ impl<'a> Gui<'a> {
 
         // Render Background.
         let shape = [
-            Move(0.0, 0 as f32),
-            Line(w as f32, 0 as f32),
-            Line(w as f32, (self.size + 1) as f32),
+            Move(0.0, 0.0),
+            Line(w, 0.0),
+            Line(w, (self.size + 1) as f32),
             Line(0.0, (self.size + 1) as f32),
         ];
         image.fill(bg /*color*/, &shape /*path*/, buffer /**/);
@@ -170,16 +175,15 @@ impl<'a> Gui<'a> {
         &mut self,
         image: &mut Image,
         buffer: &mut [u8],
-        generator: &Fn(
-            usize,
-            &mut [u8; 5],
-        )
-            -> &'b [(&'b [([u8; 4], &'b [PathOp])], &'b str)],
+        generator: &Generator<'b>,
     ) {
-        let crate::Size(w, h) = image.size();
+        let crate::Size(w, _h) = image.size();
         let mut x = 0.0;
         let y = 0.0; // Not mutable because we only call generator once.
         let mut color = [0; 5];
+        let w = f32::from(w);
+        let size: f32 = self.size as f32;
+        let double_size = 2.0 * size;
 
         // Render From Generator.
         let iter = generator(0, &mut color);
@@ -188,10 +192,10 @@ impl<'a> Gui<'a> {
 
         // Render Background.
         let shape = [
-            Move(0.0, (self.size) as f32),
-            Line(w as f32, (self.size) as f32),
-            Line(w as f32, (2 * self.size) as f32),
-            Line(0.0, (2 * self.size) as f32),
+            Move(0.0, size),
+            Line(w, size),
+            Line(w, double_size),
+            Line(0.0, double_size),
         ];
         image.fill(bg /*color*/, &shape /*path*/, buffer /**/);
         draw_window_border(image, buffer, (self.size * 2 - 1) as f32, color[4]);
@@ -230,7 +234,7 @@ impl<'a> Gui<'a> {
 fn fgcolor_from_bg(bg: [u8; 4]) -> [u8; 4] {
     let mut brightness = 0;
     for i in bg.iter() {
-        brightness += *i as u32;
+        brightness += u32::from(*i);
     }
     if brightness > 512 {
         [0, 0, 0, 255]
@@ -247,6 +251,8 @@ fn draw_window_border(
     separator: u8,
 ) {
     let crate::Size(w, h) = image.size();
+    let w = f32::from(w);
+    let h = f32::from(h);
 
     if separator == 0 {
         image.stroke(
@@ -254,9 +260,9 @@ fn draw_window_border(
             &[
                 PenWidth(2.0),
                 Move(0.0, 0.0),
-                Line(w as f32, 0.0),
-                Line(w as f32, h as f32),
-                Line(0.0, h as f32),
+                Line(w, 0.0),
+                Line(w, h),
+                Line(0.0, h),
                 Line(0.0, 0.0),
             ], /*path*/
             buffer,         /**/
@@ -267,14 +273,14 @@ fn draw_window_border(
             &[
                 PenWidth(2.0),
                 Move(0.0, 0.0),
-                Line(w as f32, 0.0),
-                Line(w as f32, h as f32),
-                Line(0.0, h as f32),
+                Line(w, 0.0),
+                Line(w, h),
+                Line(0.0, h),
                 Line(0.0, 0.0),
                 Close(),
                 PenWidth(0.5),
                 Move(0.0, y),
-                Line(w as f32, y),
+                Line(w, y),
                 Close(),
             ], /*path*/
             buffer,         /**/

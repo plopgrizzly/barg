@@ -40,7 +40,7 @@ pub struct Image {
 impl Image {
     /// Create new Image.
     pub fn new(size: Size) -> Self {
-        let (w, h) = (size.0 as u32, size.1 as u32);
+        let (w, h) = (u32::from(size.0), u32::from(size.1));
 
         Image {
             plotter: footile::Plotter::new(w, h),
@@ -54,10 +54,10 @@ impl Image {
     }
 
     /// Clear the Image.
-    pub fn clear_ptr(&mut self, pixels: *mut u8) {
+    pub unsafe fn clear_ptr(&mut self, pixels: *mut u8) {
         let len =
             self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.clear(unsafe { std::slice::from_raw_parts_mut(pixels, len) })
+        self.clear(std::slice::from_raw_parts_mut(pixels, len))
     }
 
     /// Clear the Image.
@@ -66,19 +66,19 @@ impl Image {
     }
 
     /// Draw a path a solid color (sRGBA).
-    pub fn fill_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
+    pub unsafe fn fill_ptr<'b, T>(&mut self, color: [u8; 4], path: T, pixels: *mut u8)
     where
         T: IntoIterator<Item = &'b PathOp>,
     {
         let len =
             self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.fill(color, path, unsafe {
+        self.fill(color, path,
             std::slice::from_raw_parts_mut(pixels, len)
-        })
+        )
     }
 
     /// Draw a path a solid color (sRGBA).
-    pub fn stroke_ptr<'b, T>(
+    pub unsafe fn stroke_ptr<'b, T>(
         &mut self,
         color: [u8; 4],
         path: T,
@@ -88,9 +88,7 @@ impl Image {
     {
         let len =
             self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.stroke(color, path, unsafe {
-            std::slice::from_raw_parts_mut(pixels, len)
-        })
+        self.stroke(color, path,            std::slice::from_raw_parts_mut(pixels, len))
     }
 
     /// Draw a path a solid color (sRGBA).
@@ -124,7 +122,7 @@ impl Image {
     }
 
     /// Draw text.
-    pub fn text_ptr(
+    pub unsafe fn text_ptr(
         &mut self,
         color: [u8; 4],
         xysize: (f32, f32, f32),
@@ -134,9 +132,9 @@ impl Image {
     ) -> (f32, f32) {
         let len =
             self.raster.width() as usize * self.raster.height() as usize * 4;
-        self.text(color, xysize, font, text, unsafe {
+        self.text(color, xysize, font, text,
             std::slice::from_raw_parts_mut(pixels, len)
-        })
+        )
     }
 
     /// Draw text.
