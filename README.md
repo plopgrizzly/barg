@@ -34,6 +34,6 @@ This crate is part of the [cala](https://crates.io/crates/cala) project.
 - [Cargo](https://crates.io/crates/barg)
 - [Documentation](https://docs.rs/barg)
 - [Change Log](https://code.plopgrizzly.com/barg/CHANGELOG)
-- [Contributors](https://plopgrizzly.com/CONTRIBUTORS)
+- [Contributors](https://plopgrizzly.com/barg/CONTRIBUTORS)
 - [Code of Conduct](https://code.plopgrizzly.com/barg/CODEOFCONDUCT)
 - [Join Cala on Zulip](https://plopgrizzly.zulipchat.com/join/pp13s6clnexk03tvlnrtjvi1/)
