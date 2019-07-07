@@ -19,17 +19,21 @@ Rendering is done face-by-face.  So a cube will be 6 draw calls (1 for each face
 Alpha blending will be done backwards.  No matter what faces that are closest to the camera will always be drawn first.  The alpha value will be stored on the surface we're rendering to.  If it's 255 then pixels will be culled.  If it's less faces will be blended behind the face currently in the render buffer.
 
 ## Features
-* Render 2D graphics
-* Render text
+- Render 2D graphics
+- Render text
 
 ## TODO
-* Render 3D graphics
-* Render GUI elements / widgets
+- Render 3D graphics
+- Render GUI elements / widgets
+
+## Cala
+This crate is part of the [cala](https://crates.io/crates/cala) project.
 
 ## Links
-* [Website](https://free.plopgrizzly.com/barg)
-* [Cargo](https://crates.io/crates/barg)
-* [Documentation](https://docs.rs/barg)
-* [Change Log](https://free.plopgrizzly.com/barg/changelog)
-* [Contributing](https://plopgrizzly.com/contributing)
-* [Code of Conduct](https://free.plopgrizzly.com/barg/codeofconduct)
+- [Website](https://code.plopgrizzly.com/barg)
+- [Cargo](https://crates.io/crates/barg)
+- [Documentation](https://docs.rs/barg)
+- [Change Log](https://code.plopgrizzly.com/barg/CHANGELOG)
+- [Contributors](https://plopgrizzly.com/CONTRIBUTORS)
+- [Code of Conduct](https://code.plopgrizzly.com/barg/CODEOFCONDUCT)
+- [Join Cala on Zulip](https://plopgrizzly.zulipchat.com/join/pp13s6clnexk03tvlnrtjvi1/)
