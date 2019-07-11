@@ -22,11 +22,14 @@ categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
 # For Window
-window = "0.1" # { path = "../window" }
+window = { path = "../window" }
 # For Rendering Including Text
 fonterator = "0.4"
 # For Loading RVG Files.
 rvg = "0.0.1" # { path = "../rvg" }
+
+[build-dependencies]
+res = "0.3"
 
 [dev-dependencies]
 png = "0.14"
