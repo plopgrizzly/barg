@@ -174,3 +174,32 @@ mod tests {
         assert_eq!(2 + 2, 4);
     }
 }
+
+// Initialize graphic shader.
+pub fn init_toolbar(window: &mut Window) -> (Shader, Shape) {
+    let mut gui = window.shader_new(shader!("gui"));
+
+    // Define vertices.
+    #[rustfmt::skip]
+    let vertices = [
+        -1.0, -1.0,  0.0, 1.0,
+         1.0, -1.0,  1.0, 1.0,
+         1.0,  1.0,  1.0, 0.0,
+
+        -1.0, -1.0,  0.0, 1.0,
+        -1.0,  1.0,  0.0, 0.0,
+         1.0,  1.0,  1.0, 0.0,
+    ];
+
+    // Build cube Shape
+    let mut rect = window.shape_new(ShapeBuilder::new(&mut gui).vert(&vertices).face([
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]));
+    window.instances(&mut rect, &[Transform::new()]);
+    window.build(&mut gui);
+
+    (gui, rect)
+}

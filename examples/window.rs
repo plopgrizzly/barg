@@ -4,37 +4,23 @@ fn redraw(nanos: u64) {
     
 }
 
-// Initialize graphic shader.
-fn init_gui_shape(window: &mut Window) -> (Shader, Shape) {
-    let mut gui = window.shader_new(barg::shader!("gui"));
-
-    // Define vertices.
-    #[rustfmt::skip]
-    let vertices = [
-        -1.0, -1.0,  0.0, 1.0,
-         1.0, -1.0,  1.0, 1.0,
-         1.0,  1.0,  1.0, 0.0,
-
-        -1.0, -1.0,  0.0, 1.0,
-        -1.0,  1.0,  0.0, 0.0,
-         1.0,  1.0,  1.0, 0.0,
-    ];
-
-    // Build cube Shape
-    let mut rect = window.shape_new(ShapeBuilder::new(&mut gui).vert(&vertices).face([
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]));
-    window.instances(&mut rect, &[Transform::new()]);
-    window.build(&mut gui);
-
-    (gui, rect)
-}
-
 fn main() {
-    let mut window = Window::new("Barg Window", redraw, init_gui_shape);
+    let mut window = Window::new("Barg Window", redraw, init_toolbar);
+    let toolbar_height = window.toolbar_height;
+
+    window.toolbar(&mut |buffer, width| {
+        let height = buffer.len() / (4 * width as usize);
+        let size = barg::Size(width, height as u16);
+        let mut image = barg::Image::new(size);
+        // Render Background.
+        let shape = [
+            Move(0.0, 0.0),
+            Line(width.into(), 0.0),
+            Line(width.into(), toolbar_height as f32),
+            Line(0.0, toolbar_height as f32),
+        ];
+        image.fill([32, 32, 64, 0] /*color*/, &shape /*path*/, buffer /**/);
+    });
 
     while window.run() { }
 }
