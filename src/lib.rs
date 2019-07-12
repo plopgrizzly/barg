@@ -9,6 +9,7 @@ extern crate fonterator;
 
 use fonterator::footile;
 
+pub mod icons;
 mod gui;
 mod window;
 

@@ -19,7 +19,11 @@ fn main() {
             Line(width.into(), toolbar_height as f32),
             Line(0.0, toolbar_height as f32),
         ];
-        image.fill([32, 32, 64, 0] /*color*/, &shape /*path*/, buffer /**/);
+        image.fill([84, 84, 128, 0] /*color*/, &shape /*path*/, buffer /**/);
+        // 
+        let length = buffer.len() / 4;
+        let pointer = buffer as *mut _ as *mut _;
+        icons::back(unsafe { std::slice::from_raw_parts_mut(pointer, length) }, width, height as u16);
     });
 
     while window.run() { }
