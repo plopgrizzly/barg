@@ -13,6 +13,10 @@ const VIEW: &'static [u8] = include_bytes!("../rvg/view.svg.rvg");
 const ZOOM_IN: &'static [u8] = include_bytes!("../rvg/zoom_in.svg.rvg");
 const ZOOM_OUT: &'static [u8] = include_bytes!("../rvg/zoom_out.svg.rvg");
 
-pub fn back(pixels: &mut [crate::footile::Rgba8], width: u16, graphic_width: u16) {
-    render_from_rvg(BACK, pixels, width, graphic_width / 2)
+pub fn back(pixels: &mut [crate::footile::Rgba8], x: u16, width: u16, graphic_h: u16) {
+    let margin = graphic_h / 8;
+    let graphic_width = (graphic_h / 2) - (margin);
+    let ad = (graphic_h / 2) - (margin / 2);
+
+    render_from_rvg(BACK, pixels, width, margin + x * ad, margin, graphic_width)
 }
