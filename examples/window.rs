@@ -6,7 +6,6 @@ fn redraw(nanos: u64) {
 
 fn toolbar(buffer: &mut [u8], width: u16) {
     let height = buffer.len() / (4 * width as usize);
-    println!("{} {} {}", buffer.len(), width, height);
     let size = barg::Size(width, height as u16);
     let mut image = barg::Image::new(size);
     // Render Background.
@@ -20,9 +19,16 @@ fn toolbar(buffer: &mut [u8], width: u16) {
     // 
     let length = buffer.len() / 4;
     let pointer = buffer as *mut _ as *mut _;
-    for i in 0..8 {
-        icons::back(unsafe { std::slice::from_raw_parts_mut(pointer, length) }, i, width, height as u16);
-    }
+    let slice = unsafe { std::slice::from_raw_parts_mut(pointer, length) };
+
+    icons::menu(slice, 0, width, height as u16);
+    icons::zoom_out(slice, 1, width, height as u16);
+    icons::zoom_in(slice, 3, width, height as u16);
+    icons::view(slice, 5, width, height as u16);
+    icons::search(slice, 7, width, height as u16);
+    icons::fullscreen(slice, 9, width, height as u16);
+    icons::grid(slice, 11, width, height as u16);
+    icons::next(slice, 13, width, height as u16);
 }
 
 fn main() {
