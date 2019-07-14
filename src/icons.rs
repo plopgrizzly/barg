@@ -14,14 +14,39 @@ const VIEW: &'static [u8] = include_bytes!("../rvg/view.svg.rvg");
 const ZOOM_IN: &'static [u8] = include_bytes!("../rvg/zoom_in.svg.rvg");
 const ZOOM_OUT: &'static [u8] = include_bytes!("../rvg/zoom_out.svg.rvg");
 
+pub fn text(pixels: &mut [crate::footile::Rgba8], width: u16, graphic_h: u16) {
+    let margin = graphic_h / 8;
+    let graphic_width = graphic_h - margin;
+    let ad = (graphic_h / 2) - margin;
+
+    let offs = {
+        width / 2
+    };
+
+    let mut image = crate::Image::new(crate::Size(width, graphic_h));
+
+    let words = "Hello, World 'dup";
+
+    let back = (words.len() as f32 / 2.0) * (graphic_h as f32 / 2.0);
+
+    unsafe {
+        let (x, y) = image.text_ptr([255, 255, 255, 255], (offs as f32 - back, 0.0, graphic_h.into()),
+            &fonterator::FontGroup::default(),
+            words,
+            pixels.as_ptr() as *mut _	);
+    }
+
+//    render_from_rvg(ZOOM_OUT, pixels, width, offs - ad, margin, graphic_width)
+}
+
 fn half(pixels: &mut [crate::footile::Rgba8], mut x: u16, width: u16, graphic_h: u16, slice: &[u8]) {
     let margin = graphic_h / 8;
     let graphic_width = (graphic_h / 2) - (margin);
     let ad = (graphic_h / 2) - (margin);
 
-    let offs = if x > 7 {
-        x = x - 7;
-        width - (7 * ad)
+    let offs = if x > 6 {
+        x = x - 6;
+        width - (8 * ad)
     } else {
         0
     };
@@ -33,9 +58,9 @@ fn full(pixels: &mut [crate::footile::Rgba8], mut x: u16, width: u16, graphic_h:
     let graphic_width = (graphic_h) - (margin * 2);
     let ad = (graphic_h / 2) - (margin);
 
-    let offs = if x > 7 {
-        x = x - 7;
-        width - (7 * ad)
+    let offs = if x > 6 {
+        x = x - 6;
+        width - (8 * ad)
     } else {
         0
     };

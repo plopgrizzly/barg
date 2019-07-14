@@ -29,6 +29,7 @@ fn toolbar(buffer: &mut [u8], width: u16) {
     icons::fullscreen(slice, 9, width, height as u16);
     icons::grid(slice, 11, width, height as u16);
     icons::next(slice, 13, width, height as u16);
+    icons::text(slice, width, height as u16);
 }
 
 fn main() {
