@@ -29,7 +29,7 @@ fonterator = "0.4"
 rvg = { version = "0.0.2", features = ["footile"] }
 
 [build-dependencies]
-res = "0.3"
+res = { path = "../res" } # "0.3"
 
 [dev-dependencies]
 png = "0.14"

@@ -1,6 +1,6 @@
 use barg::*;
 
-fn redraw(nanos: u64) {
+fn redraw(_nanos: u64) {
     
 }
 
@@ -15,7 +15,7 @@ fn toolbar(buffer: &mut [u8], width: u16) {
         Line(width.into(), height as f32),
         Line(0.0, height as f32),
     ];
-    image.fill([48, 24, 64, 0] /*color*/, &shape /*path*/, buffer /**/);
+    image.fill([52, 32, 64, 0] /*color*/, &shape /*path*/, buffer /**/);
     // 
     let length = buffer.len() / 4;
     let pointer = buffer as *mut _ as *mut _;

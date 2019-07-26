@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=0.1.0
+Name=Barg Example
+Icon=/home/aldaron/Crates/barg/icon.svg
+Exec=barg-window %U
+Comment=BARG!!!
+Terminal=false
+Type=Application

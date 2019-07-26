@@ -15,28 +15,33 @@ const ZOOM_IN: &'static [u8] = include_bytes!("../rvg/zoom_in.svg.rvg");
 const ZOOM_OUT: &'static [u8] = include_bytes!("../rvg/zoom_out.svg.rvg");
 
 pub fn text(pixels: &mut [crate::footile::Rgba8], width: u16, graphic_h: u16) {
-    let margin = graphic_h / 8;
-    let graphic_width = graphic_h - margin;
-    let ad = (graphic_h / 2) - margin;
+    let font: fonterator::FontGroup = fonterator::FontGroup::default();
+
+    let graphic_h = graphic_h / 2;
 
     let offs = {
         width / 2
     };
 
-    let mut image = crate::Image::new(crate::Size(width, graphic_h));
+    let text = "";
 
-    let words = "Hello, World 'dup";
+//    let mut image = crate::Image::new(crate::Size(width, graphic_h));
 
-    let back = (words.len() as f32 / 2.0) * (graphic_h as f32 / 2.0);
+    let back = (text.len() as f32 / 2.0) * (graphic_h as f32 / 2.0);
 
-    unsafe {
-        let (x, y) = image.text_ptr([255, 255, 255, 255], (offs as f32 - back, 0.0, graphic_h.into()),
-            &fonterator::FontGroup::default(),
-            words,
-            pixels.as_ptr() as *mut _	);
-    }
-
-//    render_from_rvg(ZOOM_OUT, pixels, width, offs - ad, margin, graphic_width)
+    // Render
+    let mut p = crate::footile::Plotter::new(width as u32, graphic_h as u32 * 2);
+    let r = crate::footile::RasterB::new(p.width(), p.height());
+    let mut path = font.render(
+        text, /*text*/
+        (offs as f32 - back, graphic_h as f32 / 2.0),         /*position*/
+        (graphic_h as f32, graphic_h as f32),     /*size*/
+    );
+    r.over(
+        p.fill(&mut path, crate::footile::FillRule::NonZero),
+        crate::footile::Rgba8::rgb(200, 200, 200), /*color*/
+        unsafe { std::slice::from_raw_parts_mut(pixels.as_mut_ptr(), width as usize * graphic_h as usize * 2) },
+    );
 }
 
 fn half(pixels: &mut [crate::footile::Rgba8], mut x: u16, width: u16, graphic_h: u16, slice: &[u8]) {
