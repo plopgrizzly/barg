@@ -193,12 +193,7 @@ pub fn init_toolbar(window: &mut Window) -> (Shader, Shape) {
     ];
 
     // Build cube Shape
-    let mut rect = window.shape_new(ShapeBuilder::new(&mut gui).vert(&vertices).face([
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]));
+    let mut rect = window.shape_new(ShapeBuilder::new(&mut gui).vert(&vertices).face(Transform::new()));
     window.instances(&mut rect, &[Transform::new()]);
     window.build(&mut gui);
 
