@@ -8,7 +8,7 @@
 
 [package]
 name = "barg"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Jeron Aldaron Lau <jeronlau@plopgrizzly.com>"]
 edition = "2018"
 license = "MIT / BSL-1.0"
@@ -22,14 +22,14 @@ categories = ["gui", "multimedia", "rendering::graphics-api"]
 
 [dependencies]
 # For Window
-window = { path = "../window" }
+window = "0.2" # { path = "../window" }
 # For Rendering Including Text
 fonterator = "0.4"
 # For Loading RVG Files.
 rvg = { version = "0.0.2", features = ["footile"] }
 
 [build-dependencies]
-res = { path = "../res" } # "0.3"
+res = "0.4"
 
 [dev-dependencies]
 png = "0.14"

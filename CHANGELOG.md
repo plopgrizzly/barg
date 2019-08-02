@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://code.plopgrizzly.com/s
 
 ## [Unreleased]
 
+## [0.2.0] - 2019-08-02
+### Changed
+- Updated to newest `window` crate.
+
+### Added
+- Alpha quality GUI API.
+
 ## [0.1.0] - 2019-07-07
 ### Changed
 - Now depends on `window` crate for creating windows.
