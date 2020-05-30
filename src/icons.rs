@@ -15,7 +15,7 @@ const ZOOM_IN: &'static [u8] = include_bytes!("../rvg/zoom_in.svg.rvg");
 const ZOOM_OUT: &'static [u8] = include_bytes!("../rvg/zoom_out.svg.rvg");
 
 pub fn text(pixels: &mut [crate::footile::Rgba8], width: u16, graphic_h: u16) {
-    let font: fonterator::FontGroup = fonterator::FontGroup::default();
+    let font = fonterator::normal_font();
 
     let graphic_h = graphic_h / 2;
 
